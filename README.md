@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ร้านชำครบวงจร
 
-## Getting Started
+ระบบจัดการร้านขายของชำแบบ SaaS หลายผู้เช่า (multi-tenant) — สต๊อกสินค้า, เทียบราคาซัพพลายเออร์,
+รายรับรายวัน, บิลซื้อสินค้า, รายงานสรุป และหน้าค้นหาราคาสินค้าสำหรับมือถือ (พิมพ์ค้นหา หรือสแกนบาร์โค้ดจากกล้อง)
 
-First, run the development server:
+Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + PostgreSQL
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## เริ่มต้นใช้งาน
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. ติดตั้ง dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. ตั้งค่าฐานข้อมูล — สร้างไฟล์ `.env` (ดูตัวอย่างค่าที่ต้องมีด้านล่าง) แล้วชี้ `DATABASE_URL`
+   ไปยัง Postgres ของคุณ วิธีที่เร็วที่สุดสำหรับ local dev คือให้ Prisma รันเซิร์ฟเวอร์ Postgres ให้เอง:
 
-## Learn More
+   ```bash
+   npx prisma dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   คำสั่งนี้จะพิมพ์ connection string ออกมา (เช่น `postgres://postgres:postgres@localhost:PORT/DBNAME`)
+   ให้คัดลอกไปใส่ใน `.env`. หรือจะใช้ Postgres ของคุณเอง / บริการฟรีอย่าง
+   [Neon](https://neon.tech) หรือ [Supabase](https://supabase.com) ก็ได้เช่นกัน
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   # .env
+   DATABASE_URL="postgres://postgres:postgres@localhost:PORT/DBNAME?sslmode=disable"
+   SESSION_SECRET="สุ่มด้วย: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. รัน migration และข้อมูลตัวอย่าง:
 
-## Deploy on Vercel
+   ```bash
+   npx prisma migrate deploy
+   npx prisma db seed
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   บัญชีทดลอง: เบอร์ `0812345678` / รหัสผ่าน `password123`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. รันเซิร์ฟเวอร์:
+
+   ```bash
+   npm run dev
+   ```
+
+   เปิด [http://localhost:3000](http://localhost:3000)
+
+## โครงสร้างโปรเจกต์
+
+- `src/app/page.tsx` — หน้า Landing + ฟอร์มสมัครสมาชิก (สร้างร้านใหม่)
+- `src/app/login/page.tsx` — เข้าสู่ระบบ
+- `src/app/(protected)/` — หน้าจอหลังเข้าสู่ระบบ (แดชบอร์ด, คลังสินค้า, เทียบราคาซัพพลายเออร์,
+  รายรับรายวัน, บิลซื้อสินค้า, รายงานสรุป, ค้นหาราคา, เมนู) — responsive: sidebar บนเดสก์ท็อป,
+  bottom nav บนมือถือ ในโค้ดชุดเดียวกัน
+- `src/lib/` — Prisma client, session/auth, query helpers
+- `prisma/schema.prisma` — โมเดลข้อมูล (multi-tenant ด้วย `storeId` ทุกตาราง)
+- `grocery-saas/` — มอคอัพดีไซน์ต้นฉบับ (Claude Design canvas) ไว้อ้างอิง ไม่ใช่ส่วนหนึ่งของแอประบบจริง
+
+## หมายเหตุสำคัญ
+
+- **การสแกนบาร์โค้ด** ใช้ `BarcodeDetector` API ของเบราว์เซอร์ (รองรับ Chrome/Edge บนมือถือและเดสก์ท็อป
+  ยังไม่รองรับ Safari/iOS) มีช่องกรอกเลขบาร์โค้ดด้วยตนเองเป็นทางเลือกสำรองเสมอ
+- **ต้นทุน/กำไรในหน้ารายงาน** เป็น**ค่าประมาณการ** คำนวณจากอัตรากำไรเฉลี่ยของสินค้าในคลัง เนื่องจากระบบยังไม่ได้
+  ผูกรายการสินค้าที่ขายแต่ละชิ้นเข้ากับยอดขายแต่ละรายการ (ยังไม่มีหน้าขายแบบ POS ที่เลือกสินค้าทีละชิ้น)
+- ยังไม่มีระบบเรียกเก็บเงิน/ชำระค่าสมาชิกจริง (หน้าแพ็กเกจราคาเป็นข้อมูลนำเสนอ ทุกการสมัครเริ่มที่แผนทดลองใช้)
