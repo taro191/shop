@@ -1,19 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export function LiveSearchBox({ basePath, placeholder }: { basePath: string; placeholder: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [value, setValue] = useState(searchParams.get("q") ?? "");
+  const q = searchParams.get("q") ?? "";
+  const [value, setValue] = useState(q);
+  const [lastQ, setLastQ] = useState(q);
   const [, startTransition] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    setValue(searchParams.get("q") ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams.get("q")]);
+  // Keep the field in sync when the URL's q param changes from outside this input
+  // (e.g. a recent-item chip), without doing it in an effect (avoids an extra render pass).
+  if (q !== lastQ) {
+    setLastQ(q);
+    setValue(q);
+  }
 
   function handleChange(next: string) {
     setValue(next);

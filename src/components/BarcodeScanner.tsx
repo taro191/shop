@@ -30,16 +30,12 @@ export function BarcodeScanner() {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
 
-  const [supported, setSupported] = useState<boolean | null>(null);
+  const [supported] = useState<boolean>(() => typeof window !== "undefined" && "BarcodeDetector" in window);
   const [cameraState, setCameraState] = useState<"idle" | "starting" | "live" | "denied" | "error">("idle");
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [result, setResult] = useState<LookupResult | null>(null);
   const [manualCode, setManualCode] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setSupported(typeof window !== "undefined" && "BarcodeDetector" in window);
-  }, []);
 
   const stopCamera = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
