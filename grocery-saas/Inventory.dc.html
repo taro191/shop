@@ -1,0 +1,246 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .chip { cursor: pointer; transition: background-color .12s ease, color .12s ease; white-space: nowrap; }
+    .row-hover:hover { background: oklch(0.98 0.01 90); }
+    .field input, .field select { width: 100%; font-family: 'Noto Sans Thai', sans-serif; font-size: 13px; padding: 10px 12px; border-radius: 9px; border: 1px solid oklch(0.88 0.005 90); outline: none; box-sizing: border-box; }
+    .field input:focus, .field select:focus { border-color: oklch(0.6 0.1 152); }
+    .field label { font-size: 12px; color: oklch(0.45 0.01 90); margin-bottom: 6px; display: block; }
+    .btn-primary:hover { background: oklch(0.38 0.09 152); }
+    .btn-ghost:hover { background: oklch(0.96 0.004 90); }
+    .icon-btn:hover { background: oklch(0.96 0.004 90); }
+  </style>
+</helmet>
+
+<div style="width:1440px; height:960px; display:flex; background:oklch(0.985 0.004 90); overflow:hidden; position:relative;">
+
+  <dc-import name="Sidebar" active="inventory" hint-size="240px,960px"></dc-import>
+
+  <div style="flex-grow:1; height:960px; overflow-y:auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 32px 0 32px;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:24px; color:oklch(0.24 0.01 90);">คลังสินค้า</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-top:2px;">ทั้งหมด {{totalCount}} รายการ · ใกล้หมด/หมด {{lowCount}} รายการ</div>
+      </div>
+      <div class="btn-primary" onClick="{{openPanel}}" style="display:flex; align-items:center; gap:8px; background:oklch(0.42 0.09 152); border-radius:10px; padding:11px 18px; cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        <span style="font-size:13px; font-weight:600; color:#fff;">เพิ่มสินค้าใหม่</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 32px 0 32px; gap:16px;">
+      <div style="display:flex; gap:8px;">
+        <sc-for list="{{categoryChips}}" as="chip" hint-placeholder-count="6">
+          <div class="chip" onClick="{{chip.pick}}" style="padding:8px 16px; border-radius:9px; font-size:12.5px; font-weight:500; background:{{chip.bg}}; color:{{chip.color}}; border:1px solid {{chip.border}};">{{chip.label}}</div>
+        </sc-for>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:9px 14px; width:260px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.01 90)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input type="text" placeholder="ค้นหาชื่อสินค้า..." value="{{search}}" onChange="{{onSearch}}" style="border:none; outline:none; font-size:13px; font-family:'Noto Sans Thai',sans-serif; flex-grow:1; background:transparent;" />
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="margin:20px 32px 32px 32px; background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:2fr 1.1fr 0.9fr 1fr 1fr 1fr 44px; padding:12px 22px; font-size:11.5px; color:oklch(0.5 0.01 90); border-bottom:1px solid oklch(0.94 0.004 90);">
+        <span>สินค้า</span><span>หมวดหมู่</span><span>คงเหลือ</span><span>ราคาทุน</span><span>ราคาขาย</span><span>สถานะ</span><span></span>
+      </div>
+
+      <sc-for list="{{rows}}" as="p" hint-placeholder-count="6">
+        <div class="row-hover" style="display:grid; grid-template-columns:2fr 1.1fr 0.9fr 1fr 1fr 1fr 44px; padding:13px 22px; align-items:center; border-top:1px solid oklch(0.96 0.004 90);">
+          <span style="font-size:13.5px; font-weight:500; color:oklch(0.24 0.01 90);">{{p.name}}</span>
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">{{p.category}}</span>
+          <span style="font-size:13px; color:oklch(0.3 0.01 90);">{{p.qty}} {{p.unit}}</span>
+          <span style="font-size:13px; color:oklch(0.5 0.01 90);">฿{{p.cost}}</span>
+          <span style="font-size:13px; font-weight:600; color:oklch(0.24 0.01 90);">฿{{p.price}}</span>
+          <span style="font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:7px; width:fit-content; background:{{p.statusBg}}; color:{{p.statusColor}};">{{p.statusText}}</span>
+          <div class="icon-btn" style="width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="oklch(0.5 0.01 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          </div>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="padding:48px; text-align:center; font-size:13px; color:oklch(0.55 0.01 90);">ไม่พบสินค้าที่ค้นหา</div>
+      </sc-if>
+    </div>
+
+  </div>
+
+  <!-- Add product slide-over -->
+  <sc-if value="{{panelOpen}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closePanel}}" style="position:absolute; inset:0; background:rgba(20,25,20,0.35);"></div>
+    <div style="position:absolute; top:0; right:0; width:380px; height:960px; background:#fff; box-shadow:-8px 0 24px rgba(0,0,0,0.08); display:flex; flex-direction:column;">
+      <div style="padding:22px 24px; border-bottom:1px solid oklch(0.94 0.004 90); display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-family:'Kanit',sans-serif; font-weight:600; font-size:17px; color:oklch(0.24 0.01 90);">เพิ่มสินค้าใหม่</span>
+        <div class="icon-btn" onClick="{{closePanel}}" style="width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.4 0.01 90)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </div>
+      </div>
+      <div style="padding:22px 24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex-grow:1;">
+        <div class="field">
+          <label>ชื่อสินค้า</label>
+          <input type="text" placeholder="เช่น น้ำปลาตราปลาหมึก 700ml" value="{{form.name}}" onChange="{{setName}}" />
+        </div>
+        <div class="field">
+          <label>หมวดหมู่</label>
+          <select value="{{form.category}}" onChange="{{setCategory}}">
+            <option value="อาหารแห้ง">อาหารแห้ง</option>
+            <option value="เครื่องปรุง">เครื่องปรุง</option>
+            <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+            <option value="ของใช้ในบ้าน">ของใช้ในบ้าน</option>
+            <option value="ขนม">ขนม</option>
+          </select>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="field">
+            <label>ราคาทุน (บาท)</label>
+            <input type="text" placeholder="0" value="{{form.cost}}" onChange="{{setCost}}" />
+          </div>
+          <div class="field">
+            <label>ราคาขาย (บาท)</label>
+            <input type="text" placeholder="0" value="{{form.price}}" onChange="{{setPrice}}" />
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="field">
+            <label>จำนวนคงเหลือ</label>
+            <input type="text" placeholder="0" value="{{form.qty}}" onChange="{{setQty}}" />
+          </div>
+          <div class="field">
+            <label>หน่วยนับ</label>
+            <select value="{{form.unit}}" onChange="{{setUnit}}">
+              <option value="ชิ้น">ชิ้น</option>
+              <option value="ขวด">ขวด</option>
+              <option value="ถุง">ถุง</option>
+              <option value="กล่อง">กล่อง</option>
+              <option value="แผง">แผง</option>
+              <option value="กระป๋อง">กระป๋อง</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="padding:18px 24px; border-top:1px solid oklch(0.94 0.004 90); display:flex; gap:10px;">
+        <div class="btn-ghost" onClick="{{closePanel}}" style="flex-grow:1; text-align:center; padding:11px; border-radius:10px; border:1px solid oklch(0.88 0.005 90); font-size:13px; font-weight:600; color:oklch(0.4 0.01 90); cursor:pointer;">ยกเลิก</div>
+        <div class="btn-primary" onClick="{{saveProduct}}" style="flex-grow:1; text-align:center; padding:11px; border-radius:10px; background:oklch(0.42 0.09 152); font-size:13px; font-weight:600; color:#fff; cursor:pointer;">บันทึกสินค้า</div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      search: '',
+      category: 'ทั้งหมด',
+      panelOpen: false,
+      form: { name: '', category: 'อาหารแห้ง', cost: '', price: '', qty: '', unit: 'ชิ้น' },
+      products: [
+        { name: 'น้ำปลาตราปลาหมึก 700ml', category: 'เครื่องปรุง', qty: 3, unit: 'ขวด', cost: 32, price: 45 },
+        { name: 'ข้าวสารหอมมะลิ 5kg', category: 'อาหารแห้ง', qty: 2, unit: 'ถุง', cost: 175, price: 210 },
+        { name: 'ไข่ไก่เบอร์ 0', category: 'อาหารแห้ง', qty: 4, unit: 'แผง', cost: 95, price: 115 },
+        { name: 'น้ำมันพืชตราองุ่น 1L', category: 'เครื่องปรุง', qty: 5, unit: 'ขวด', cost: 48, price: 62 },
+        { name: 'น้ำอัดลมโคล่า 325ml', category: 'เครื่องดื่ม', qty: 48, unit: 'กระป๋อง', cost: 9, price: 15 },
+        { name: 'มาม่าต้มยำกุ้ง', category: 'อาหารแห้ง', qty: 120, unit: 'ซอง', cost: 5, price: 7 },
+        { name: 'ผงซักฟอกไบรท์ 1kg', category: 'ของใช้ในบ้าน', qty: 18, unit: 'ถุง', cost: 38, price: 52 },
+        { name: 'สบู่ก้อนลักส์', category: 'ของใช้ในบ้าน', qty: 30, unit: 'ก้อน', cost: 12, price: 18 },
+        { name: 'ขนมปังกรอบเวเฟอร์', category: 'ขนม', qty: 0, unit: 'ห่อ', cost: 6, price: 10 },
+        { name: 'นมถั่วเหลืองแลคตาซอย', category: 'เครื่องดื่ม', qty: 22, unit: 'กล่อง', cost: 11, price: 16 }
+      ]
+    };
+  }
+  renderVals() {
+    const CATS = ['ทั้งหมด', 'อาหารแห้ง', 'เครื่องปรุง', 'เครื่องดื่ม', 'ของใช้ในบ้าน', 'ขนม'];
+    const st = this.state;
+    const categoryChips = CATS.map((c) => {
+      const active = st.category === c;
+      return {
+        label: c,
+        bg: active ? 'oklch(0.42 0.09 152)' : '#ffffff',
+        color: active ? '#ffffff' : 'oklch(0.4 0.01 90)',
+        border: active ? 'oklch(0.42 0.09 152)' : 'oklch(0.88 0.005 90)',
+        pick: () => this.setState({ category: c })
+      };
+    });
+
+    const q = st.search.trim().toLowerCase();
+    const filtered = st.products.filter((p) =>
+      (st.category === 'ทั้งหมด' || p.category === st.category) &&
+      (q === '' || p.name.toLowerCase().indexOf(q) !== -1)
+    );
+
+    const statusOf = (qty) => {
+      if (qty === 0) return { text: 'สินค้าหมด', bg: 'oklch(0.94 0.03 20)', color: 'oklch(0.58 0.19 25)' };
+      if (qty <= 8) return { text: 'ใกล้หมด', bg: 'oklch(0.95 0.04 55)', color: 'oklch(0.55 0.16 50)' };
+      return { text: 'พร้อมขาย', bg: 'oklch(0.94 0.03 152)', color: 'oklch(0.42 0.09 152)' };
+    };
+
+    const rows = filtered.map((p) => {
+      const s = statusOf(p.qty);
+      return { ...p, statusText: s.text, statusBg: s.bg, statusColor: s.color };
+    });
+
+    const lowCount = st.products.filter((p) => p.qty <= 8).length;
+
+    const updateField = (field) => (e) => {
+      this.setState({ form: { ...this.state.form, [field]: e.target.value } });
+    };
+
+    return {
+      totalCount: st.products.length,
+      lowCount,
+      search: st.search,
+      onSearch: (e) => this.setState({ search: e.target.value }),
+      categoryChips,
+      rows,
+      isEmpty: rows.length === 0,
+      panelOpen: st.panelOpen,
+      openPanel: () => this.setState({ panelOpen: true }),
+      closePanel: () => this.setState({ panelOpen: false }),
+      form: st.form,
+      setName: updateField('name'),
+      setCategory: updateField('category'),
+      setCost: updateField('cost'),
+      setPrice: updateField('price'),
+      setQty: updateField('qty'),
+      setUnit: updateField('unit'),
+      saveProduct: () => {
+        const f = this.state.form;
+        if (!f.name.trim()) return;
+        const newProduct = {
+          name: f.name.trim(),
+          category: f.category,
+          qty: parseInt(f.qty, 10) || 0,
+          unit: f.unit,
+          cost: parseFloat(f.cost) || 0,
+          price: parseFloat(f.price) || 0
+        };
+        this.setState({
+          products: [newProduct, ...this.state.products],
+          panelOpen: false,
+          form: { name: '', category: 'อาหารแห้ง', cost: '', price: '', qty: '', unit: 'ชิ้น' }
+        });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .menu-row, .toggle { cursor: pointer; }
+  </style>
+</helmet>
+
+<div style="width:390px; height:844px; display:flex; flex-direction:column; background:oklch(0.985 0.004 90); overflow:hidden; position:relative;">
+
+  <!-- App bar -->
+  <div style="padding:20px 20px 4px 20px; flex-shrink:0;">
+    <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:21px; color:oklch(0.24 0.01 90);">เมนู</div>
+  </div>
+
+  <div style="flex-grow:1; overflow-y:auto; padding:16px 20px 96px 20px;">
+
+    <!-- Profile card -->
+    <div style="background:oklch(0.26 0.045 155); border-radius:16px; padding:20px; display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+      <div style="width:46px; height:46px; border-radius:50%; background:oklch(0.5 0.06 152); display:flex; align-items:center; justify-content:center; font-family:'Kanit',sans-serif; font-weight:600; color:#fff; font-size:16px; flex-shrink:0;">สม</div>
+      <div style="min-width:0;">
+        <div style="font-size:14.5px; font-weight:600; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">ร้านสมชายพาณิชย์</div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:oklch(0.72 0.15 55);"></span>
+          <span style="font-size:11.5px; color:oklch(0.75 0.02 150);">แผน Standard · ใช้งานอยู่</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop features -->
+    <div style="font-size:12px; font-weight:600; color:oklch(0.5 0.01 90); margin-bottom:10px; padding:0 2px;">จัดการร้าน (แนะนำใช้บนคอมพิวเตอร์)</div>
+    <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden; margin-bottom:20px;">
+
+      <div class="menu-row" style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid oklch(0.95 0.004 90);">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path></svg>
+        </div>
+        <div style="flex-grow:1;">
+          <div style="font-size:13.5px; font-weight:500; color:oklch(0.24 0.01 90);">คลังสินค้า</div>
+          <div style="font-size:11px; color:oklch(0.5 0.01 90); margin-top:1px;">จัดการสต๊อกและราคาสินค้า</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7 0.005 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+      </div>
+
+      <div class="menu-row" style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid oklch(0.95 0.004 90);">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.95 0.04 55); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.16 50)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v11a2 2 0 0 0 2 2h11"></path><path d="M7 8l-4 4 4 4"></path><path d="M17 21V10a2 2 0 0 0-2-2H4"></path><path d="M17 16l4-4-4-4"></path></svg>
+        </div>
+        <div style="flex-grow:1;">
+          <div style="font-size:13.5px; font-weight:500; color:oklch(0.24 0.01 90);">เทียบราคาซัพพลายเออร์</div>
+          <div style="font-size:11px; color:oklch(0.5 0.01 90); margin-top:1px;">หาต้นทุนที่ถูกที่สุด</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7 0.005 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+      </div>
+
+      <div class="menu-row" style="display:flex; align-items:center; gap:12px; padding:14px 16px;">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9"></path><path d="M10 21V3"></path><path d="M17 21v-7"></path><path d="M3 21h18"></path></svg>
+        </div>
+        <div style="flex-grow:1;">
+          <div style="font-size:13.5px; font-weight:500; color:oklch(0.24 0.01 90);">รายงานสรุปซื้อขาย</div>
+          <div style="font-size:11px; color:oklch(0.5 0.01 90); margin-top:1px;">รายวัน รายเดือน รายไตรมาส</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7 0.005 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+      </div>
+
+    </div>
+
+    <!-- Account -->
+    <div style="font-size:12px; font-weight:600; color:oklch(0.5 0.01 90); margin-bottom:10px; padding:0 2px;">บัญชีและการตั้งค่า</div>
+    <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden;">
+
+      <div style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid oklch(0.95 0.004 90);">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.96 0.004 90); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.4 0.01 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+        </div>
+        <div style="flex-grow:1; font-size:13.5px; font-weight:500; color:oklch(0.24 0.01 90);">การแจ้งเตือน</div>
+        <div class="toggle" onClick="{{toggleNotif}}" style="width:38px; height:22px; border-radius:11px; background:{{notifBg}}; position:relative; flex-shrink:0;">
+          <div style="position:absolute; top:2px; left:{{notifLeft}}px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.2); transition:left .15s ease;"></div>
+        </div>
+      </div>
+
+      <div class="menu-row" style="display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid oklch(0.95 0.004 90);">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.96 0.004 90); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.4 0.01 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.6-5.2A2 2 0 0 1 6.5 2.5h11a2 2 0 0 1 1.9 1.3L21 9"></path><path d="M3 9h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path><path d="M9 13a3 3 0 0 0 6 0"></path></svg>
+        </div>
+        <div style="flex-grow:1; font-size:13.5px; font-weight:500; color:oklch(0.24 0.01 90);">ข้อมูลร้านค้า</div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.7 0.005 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"></path></svg>
+      </div>
+
+      <div class="menu-row" style="display:flex; align-items:center; gap:12px; padding:14px 16px;">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.94 0.03 20); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.58 0.19 25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+        </div>
+        <div style="flex-grow:1; font-size:13.5px; font-weight:500; color:oklch(0.58 0.19 25);">ออกจากระบบ</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div style="position:absolute; left:0; right:0; bottom:0;">
+    <dc-import name="BottomNav" active="more" hint-size="390px,76px"></dc-import>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { notifOn: true };
+  }
+  renderVals() {
+    return {
+      notifBg: this.state.notifOn ? 'oklch(0.42 0.09 152)' : 'oklch(0.88 0.005 90)',
+      notifLeft: this.state.notifOn ? 18 : 2,
+      toggleNotif: () => this.setState({ notifOn: !this.state.notifOn })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .chip { cursor: pointer; transition: background-color .12s ease, color .12s ease; white-space: nowrap; }
+    .switch { cursor: pointer; }
+  </style>
+</helmet>
+
+<div style="width:1440px; height:960px; display:flex; background:oklch(0.985 0.004 90); overflow:hidden;">
+
+  <dc-import name="Sidebar" active="compare" hint-size="240px,960px"></dc-import>
+
+  <div style="flex-grow:1; height:960px; overflow-y:auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 32px 0 32px;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:24px; color:oklch(0.24 0.01 90);">เปรียบเทียบราคาซัพพลายเออร์</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-top:2px;">เทียบราคาสินค้าจากร้านส่ง {{supplierCount}} เจ้า เพื่อหาราคาต้นทุนที่ดีที่สุด</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:9px 14px;">
+        <div class="switch" onClick="{{toggleSwitchOnly}}" style="width:36px; height:20px; border-radius:10px; background:{{switchBg}}; position:relative;">
+          <div style="position:absolute; top:2px; left:{{switchLeft}}px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.2); transition:left .15s ease;"></div>
+        </div>
+        <span style="font-size:12.5px; color:oklch(0.4 0.01 90);">แสดงเฉพาะที่ควรเปลี่ยนร้านส่ง</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 32px 0 32px; gap:16px;">
+      <div style="display:flex; gap:8px;">
+        <sc-for list="{{categoryChips}}" as="chip" hint-placeholder-count="5">
+          <div class="chip" onClick="{{chip.pick}}" style="padding:8px 16px; border-radius:9px; font-size:12.5px; font-weight:500; background:{{chip.bg}}; color:{{chip.color}}; border:1px solid {{chip.border}};">{{chip.label}}</div>
+        </sc-for>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:9px 14px; width:260px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.01 90)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input type="text" placeholder="ค้นหาสินค้า..." value="{{search}}" onChange="{{onSearch}}" style="border:none; outline:none; font-size:13px; font-family:'Noto Sans Thai',sans-serif; flex-grow:1; background:transparent;" />
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; padding:20px 32px 32px 32px;">
+
+      <sc-for list="{{cards}}" as="c" hint-placeholder-count="6">
+        <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:20px; display:flex; flex-direction:column; gap:14px;">
+
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+            <div>
+              <div style="font-size:14.5px; font-weight:600; color:oklch(0.24 0.01 90);">{{c.name}}</div>
+              <div style="font-size:11.5px; color:oklch(0.5 0.01 90); margin-top:2px;">หน่วยละ {{c.unit}} · {{c.category}}</div>
+            </div>
+            <sc-if value="{{c.shouldSwitch}}" hint-placeholder-val="{{false}}">
+              <span style="font-size:11px; font-weight:600; color:oklch(0.55 0.16 50); background:oklch(0.95 0.04 55); border-radius:7px; padding:4px 9px; white-space:nowrap;">ประหยัดได้ ฿{{c.savings}}</span>
+            </sc-if>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{c.suppliers}}" as="s" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-radius:9px; background:{{s.rowBg}}; border:1px solid {{s.rowBorder}};">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:12.5px; font-weight:500; color:oklch(0.3 0.01 90);">{{s.name}}</span>
+                  <sc-if value="{{s.isCurrent}}" hint-placeholder-val="{{false}}">
+                    <span style="font-size:10.5px; color:oklch(0.5 0.01 90); background:oklch(0.94 0.004 90); border-radius:5px; padding:2px 6px;">ใช้อยู่</span>
+                  </sc-if>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <sc-if value="{{s.isCheapest}}" hint-placeholder-val="{{false}}">
+                    <span style="font-size:10.5px; font-weight:600; color:oklch(0.42 0.09 152); background:oklch(0.94 0.03 152); border-radius:5px; padding:2px 7px;">ถูกสุด</span>
+                  </sc-if>
+                  <span style="font-size:13.5px; font-weight:700; color:{{s.priceColor}};">฿{{s.price}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+        </div>
+      </sc-for>
+
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { search: '', category: 'ทั้งหมด', switchOnly: false };
+  }
+  renderVals() {
+    const PRODUCTS = [
+      { name: 'น้ำปลาตราปลาหมึก 700ml', unit: 'ขวด', category: 'เครื่องปรุง', current: 'ทองดีพาณิชย์',
+        suppliers: [{ name: 'สมบูรณ์การค้า', price: 32 }, { name: 'ทองดีพาณิชย์', price: 34 }, { name: 'แม่ประนอมโฮลเซล', price: 30.5 }] },
+      { name: 'ข้าวสารหอมมะลิ 5kg', unit: 'ถุง', category: 'อาหารแห้ง', current: 'สมบูรณ์การค้า',
+        suppliers: [{ name: 'สมบูรณ์การค้า', price: 175 }, { name: 'ทองดีพาณิชย์', price: 179 }, { name: 'แม่ประนอมโฮลเซล', price: 172 }] },
+      { name: 'น้ำมันพืชตราองุ่น 1L', unit: 'ขวด', category: 'เครื่องปรุง', current: 'แม่ประนอมโฮลเซล',
+        suppliers: [{ name: 'สมบูรณ์การค้า', price: 47 }, { name: 'ทองดีพาณิชย์', price: 45.5 }, { name: 'แม่ประนอมโฮลเซล', price: 48 }] },
+      { name: 'น้ำอัดลมโคล่า 325ml (แพ็ค 24)', unit: 'แพ็ค', category: 'เครื่องดื่ม', current: 'ทองดีพาณิชย์',
+        suppliers: [{ name: 'สมบูรณ์การค้า', price: 205 }, { name: 'ทองดีพาณิชย์', price: 215 }, { name: 'แม่ประนอมโฮลเซล', price: 208 }] },
+      { name: 'ผงซักฟอกไบรท์ 1kg', unit: 'ถุง', category: 'ของใช้ในบ้าน', current: 'สมบูรณ์การค้า',
+        suppliers: [{ name: 'สมบูรณ์การค้า', price: 38 }, { name: 'ทองดีพาณิชย์', price: 39.5 }, { name: 'แม่ประนอมโฮลเซล', price: 37 }] },
+      { name: 'มาม่าต้มยำกุ้ง (ลัง 30 ซอง)', unit: 'ลัง', category: 'อาหารแห้ง', current: 'ทองดีพาณิชย์',
+        suppliers: [{ name: 'สมบูรณ์การค้า', price: 145 }, { name: 'ทองดีพาณิชย์', price: 150 }, { name: 'แม่ประนอมโฮลเซล', price: 143 }] }
+    ];
+    const CATS = ['ทั้งหมด', 'อาหารแห้ง', 'เครื่องปรุง', 'เครื่องดื่ม', 'ของใช้ในบ้าน'];
+    const st = this.state;
+
+    const categoryChips = CATS.map((c) => {
+      const active = st.category === c;
+      return {
+        label: c,
+        bg: active ? 'oklch(0.42 0.09 152)' : '#ffffff',
+        color: active ? '#ffffff' : 'oklch(0.4 0.01 90)',
+        border: active ? 'oklch(0.42 0.09 152)' : 'oklch(0.88 0.005 90)',
+        pick: () => this.setState({ category: c })
+      };
+    });
+
+    const q = st.search.trim().toLowerCase();
+
+    const enriched = PRODUCTS.map((p) => {
+      const sorted = [...p.suppliers].sort((a, b) => a.price - b.price);
+      const cheapest = sorted[0];
+      const currentPrice = p.suppliers.find((s) => s.name === p.current).price;
+      const savings = Math.round((currentPrice - cheapest.price) * 10) / 10;
+      const shouldSwitch = savings > 0.4;
+      const suppliers = sorted.map((s) => {
+        const isCheapest = s.name === cheapest.name;
+        const isCurrent = s.name === p.current;
+        return {
+          name: s.name,
+          price: s.price,
+          isCheapest,
+          isCurrent,
+          rowBg: isCheapest ? 'oklch(0.97 0.015 152)' : '#ffffff',
+          rowBorder: isCheapest ? 'oklch(0.85 0.05 152)' : 'oklch(0.93 0.005 90)',
+          priceColor: isCheapest ? 'oklch(0.42 0.09 152)' : 'oklch(0.3 0.01 90)'
+        };
+      });
+      return { ...p, suppliers, savings, shouldSwitch };
+    });
+
+    const filtered = enriched.filter((p) =>
+      (st.category === 'ทั้งหมด' || p.category === st.category) &&
+      (q === '' || p.name.toLowerCase().indexOf(q) !== -1) &&
+      (!st.switchOnly || p.shouldSwitch)
+    );
+
+    return {
+      supplierCount: 3,
+      categoryChips,
+      search: st.search,
+      onSearch: (e) => this.setState({ search: e.target.value }),
+      switchBg: st.switchOnly ? 'oklch(0.42 0.09 152)' : 'oklch(0.88 0.005 90)',
+      switchLeft: st.switchOnly ? 18 : 2,
+      toggleSwitchOnly: () => this.setState({ switchOnly: !this.state.switchOnly }),
+      cards: filtered
+    };
+  }
+}
+</script>
+</body>
+</html>

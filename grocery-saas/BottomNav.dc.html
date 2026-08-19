@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .tab-item { cursor: pointer; }
+  </style>
+</helmet>
+<div style="width:390px; background:#ffffff; border-top:1px solid oklch(0.92 0.005 90); display:flex; align-items:stretch; padding:8px 6px 18px 6px; box-shadow:0 -2px 10px rgba(20,30,20,0.04);">
+
+  <div class="tab-item" onClick="{{pickSearch}}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{searchColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+    <span style="font-size:10.5px; font-weight:{{searchWeight}}; color:{{searchColor}};">ค้นหาราคา</span>
+  </div>
+
+  <div class="tab-item" onClick="{{pickIncome}}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{incomeColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2"></rect><path d="M2.5 10h19"></path><circle cx="16.5" cy="14.5" r="1.5"></circle></svg>
+    <span style="font-size:10.5px; font-weight:{{incomeWeight}}; color:{{incomeColor}};">รายรับ</span>
+  </div>
+
+  <div class="tab-item" onClick="{{pickBills}}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{billsColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v18l-3-2-3 2-3-2-3 2V2z"></path><path d="M9 8h6"></path><path d="M9 12h6"></path></svg>
+    <span style="font-size:10.5px; font-weight:{{billsWeight}}; color:{{billsColor}};">บิลซื้อ</span>
+  </div>
+
+  <div class="tab-item" onClick="{{pickMore}}" style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0;">
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{moreColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h16"></path></svg>
+    <span style="font-size:10.5px; font-weight:{{moreWeight}}; color:{{moreColor}};">เมนู</span>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{
+  "active": {"editor": "enum", "default": "search", "options": ["search","income","bills","more"]}
+}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'search';
+    const ACTIVE = 'oklch(0.55 0.16 50)';
+    const IDLE = 'oklch(0.6 0.01 90)';
+    const item = (key) => ({
+      color: active === key ? ACTIVE : IDLE,
+      weight: active === key ? '700' : '500'
+    });
+    const s = item('search'), i = item('income'), b = item('bills'), m = item('more');
+    return {
+      searchColor: s.color, searchWeight: s.weight,
+      incomeColor: i.color, incomeWeight: i.weight,
+      billsColor: b.color, billsWeight: b.weight,
+      moreColor: m.color, moreWeight: m.weight,
+      pickSearch: () => {}, pickIncome: () => {}, pickBills: () => {}, pickMore: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

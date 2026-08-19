@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .period-tab { cursor: pointer; transition: background-color .12s ease, color .12s ease; }
+    .row-hover:hover { background: oklch(0.98 0.01 90); }
+    .export-btn:hover { background: oklch(0.96 0.004 90); }
+  </style>
+</helmet>
+
+<div style="width:1440px; height:960px; display:flex; background:oklch(0.985 0.004 90); overflow:hidden;">
+
+  <dc-import name="Sidebar" active="reports" hint-size="240px,960px"></dc-import>
+
+  <div style="flex-grow:1; height:960px; overflow-y:auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 32px 0 32px;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:24px; color:oklch(0.24 0.01 90);">รายงานสรุปซื้อขาย</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-top:2px;">ภาพรวมยอดขาย ต้นทุน และกำไร แยกตามช่วงเวลา</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="display:flex; gap:4px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:4px;">
+          <sc-for list="{{periodTabs}}" as="t" hint-placeholder-count="3">
+            <div class="period-tab" onClick="{{t.pick}}" style="padding:8px 16px; border-radius:7px; font-size:12.5px; font-weight:{{t.weight}}; background:{{t.bg}}; color:{{t.color}};">{{t.label}}</div>
+          </sc-for>
+        </div>
+        <div class="export-btn" style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:10px 16px; cursor:pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.4 0.01 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7 10l5 5 5-5"></path><path d="M4 19h16"></path></svg>
+          <span style="font-size:13px; font-weight:600; color:oklch(0.4 0.01 90);">ส่งออกรายงาน</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary tiles -->
+    <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:18px; padding:24px 32px 0 32px;">
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">ยอดขายรวม ({{periodLabel}})</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:22px; font-weight:600; color:oklch(0.24 0.01 90); margin-top:8px;">฿{{totalSales}}</div>
+      </div>
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">ต้นทุนรวม</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:22px; font-weight:600; color:oklch(0.24 0.01 90); margin-top:8px;">฿{{totalCost}}</div>
+      </div>
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">กำไรสุทธิ</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:22px; font-weight:600; color:oklch(0.42 0.09 152); margin-top:8px;">฿{{totalProfit}}</div>
+      </div>
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">อัตรากำไรเฉลี่ย</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:22px; font-weight:600; color:oklch(0.24 0.01 90); margin-top:8px;">{{marginPct}}%</div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div style="padding:20px 32px 0 32px;">
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:22px;">
+        <div style="display:flex; align-items:center; gap:18px; margin-bottom:16px;">
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90);">แนวโน้มยอดขายและกำไร</div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="width:10px; height:10px; border-radius:3px; background:oklch(0.5 0.1 152); display:inline-block;"></span>
+            <span style="font-size:11.5px; color:oklch(0.5 0.01 90);">ยอดขาย</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="width:10px; height:10px; border-radius:3px; background:oklch(0.62 0.16 50); display:inline-block;"></span>
+            <span style="font-size:11.5px; color:oklch(0.5 0.01 90);">กำไร</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:10px; height:180px; padding:0 4px;">
+          <sc-for list="{{bars}}" as="bar" hint-placeholder-count="8">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex-grow:1;">
+              <div style="display:flex; align-items:flex-end; gap:4px; height:150px;">
+                <div style="width:14px; height:{{bar.salesPx}}px; background:oklch(0.5 0.1 152); border-radius:5px 5px 2px 2px;"></div>
+                <div style="width:14px; height:{{bar.profitPx}}px; background:oklch(0.62 0.16 50); border-radius:5px 5px 2px 2px;"></div>
+              </div>
+              <span style="font-size:11px; color:oklch(0.5 0.01 90); text-align:center;">{{bar.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="margin:20px 32px 32px 32px; background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden;">
+      <div style="padding:16px 22px; border-bottom:1px solid oklch(0.94 0.004 90); font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90);">รายละเอียดตามช่วงเวลา</div>
+      <div style="display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 0.8fr; padding:10px 22px; font-size:11.5px; color:oklch(0.5 0.01 90);">
+        <span>{{periodColLabel}}</span><span>ยอดขาย</span><span>ต้นทุน</span><span>กำไร</span><span>จำนวนบิล</span>
+      </div>
+      <sc-for list="{{tableRows}}" as="r" hint-placeholder-count="8">
+        <div class="row-hover" style="display:grid; grid-template-columns:1.3fr 1fr 1fr 1fr 0.8fr; padding:12px 22px; align-items:center; border-top:1px solid oklch(0.96 0.004 90);">
+          <span style="font-size:13px; font-weight:500; color:oklch(0.24 0.01 90);">{{r.label}}</span>
+          <span style="font-size:13px; color:oklch(0.3 0.01 90);">฿{{r.sales}}</span>
+          <span style="font-size:13px; color:oklch(0.5 0.01 90);">฿{{r.cost}}</span>
+          <span style="font-size:13px; font-weight:600; color:oklch(0.42 0.09 152);">฿{{r.profit}}</span>
+          <span style="font-size:13px; color:oklch(0.5 0.01 90);">{{r.bills}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { period: 'monthly' };
+  }
+  renderVals() {
+    const fmt = (n) => Math.round(n).toLocaleString('en-US');
+
+    const DAILY = [
+      { label: '13 ส.ค.', sales: 7200, cost: 5300, bills: 41 },
+      { label: '14 ส.ค.', sales: 6800, cost: 5100, bills: 38 },
+      { label: '15 ส.ค.', sales: 9100, cost: 6700, bills: 52 },
+      { label: '16 ส.ค.', sales: 8400, cost: 6200, bills: 47 },
+      { label: '17 ส.ค.', sales: 9600, cost: 7000, bills: 55 },
+      { label: '18 ส.ค.', sales: 10200, cost: 7400, bills: 58 },
+      { label: '19 ส.ค.', sales: 8420, cost: 6270, bills: 46 }
+    ];
+    const MONTHLY = [
+      { label: 'ม.ค.', sales: 182000, cost: 136000, bills: 1120 },
+      { label: 'ก.พ.', sales: 175000, cost: 131000, bills: 1080 },
+      { label: 'มี.ค.', sales: 198000, cost: 148000, bills: 1210 },
+      { label: 'เม.ย.', sales: 205000, cost: 153000, bills: 1250 },
+      { label: 'พ.ค.', sales: 190000, cost: 142000, bills: 1160 },
+      { label: 'มิ.ย.', sales: 212000, cost: 158000, bills: 1290 },
+      { label: 'ก.ค.', sales: 224000, cost: 167000, bills: 1340 },
+      { label: 'ส.ค.', sales: 231000, cost: 172000, bills: 1380 }
+    ];
+    const QUARTERLY = [
+      { label: 'ไตรมาส 1', sales: 555000, cost: 415000, bills: 3410 },
+      { label: 'ไตรมาส 2', sales: 607000, cost: 453000, bills: 3700 },
+      { label: 'ไตรมาส 3 (บางส่วน)', sales: 455000, cost: 339000, bills: 2720 },
+      { label: 'ไตรมาส 4', sales: 0, cost: 0, bills: 0 }
+    ];
+
+    const CFG = {
+      daily: { data: DAILY, label: 'รายวัน', colLabel: 'วันที่' },
+      monthly: { data: MONTHLY, label: 'รายเดือน', colLabel: 'เดือน' },
+      quarterly: { data: QUARTERLY, label: 'รายไตรมาส', colLabel: 'ไตรมาส' }
+    };
+
+    const st = this.state;
+    const cfg = CFG[st.period];
+    const withProfit = cfg.data.map((d) => ({ ...d, profit: d.sales - d.cost }));
+
+    const totalSales = withProfit.reduce((s, d) => s + d.sales, 0);
+    const totalCost = withProfit.reduce((s, d) => s + d.cost, 0);
+    const totalProfit = totalSales - totalCost;
+    const marginPct = totalSales > 0 ? Math.round((totalProfit / totalSales) * 1000) / 10 : 0;
+
+    const maxSales = Math.max(...withProfit.map((d) => d.sales), 1);
+    const bars = withProfit.map((d) => ({
+      label: d.label,
+      salesPx: Math.round((d.sales / maxSales) * 150),
+      profitPx: Math.round((d.profit / maxSales) * 150)
+    }));
+
+    const tableRows = withProfit.map((d) => ({
+      label: d.label, sales: fmt(d.sales), cost: fmt(d.cost), profit: fmt(d.profit), bills: d.bills
+    }));
+
+    const periodTabs = [
+      { key: 'daily', label: 'รายวัน' },
+      { key: 'monthly', label: 'รายเดือน' },
+      { key: 'quarterly', label: 'รายไตรมาส' }
+    ].map((p) => {
+      const active = st.period === p.key;
+      return {
+        label: p.label,
+        bg: active ? 'oklch(0.42 0.09 152)' : 'transparent',
+        color: active ? '#ffffff' : 'oklch(0.4 0.01 90)',
+        weight: active ? '600' : '400',
+        pick: () => this.setState({ period: p.key })
+      };
+    });
+
+    return {
+      periodTabs,
+      periodLabel: cfg.label,
+      periodColLabel: cfg.colLabel,
+      totalSales: fmt(totalSales),
+      totalCost: fmt(totalCost),
+      totalProfit: fmt(totalProfit),
+      marginPct,
+      bars,
+      tableRows
+    };
+  }
+}
+</script>
+</body>
+</html>

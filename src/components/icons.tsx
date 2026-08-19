@@ -1,0 +1,143 @@
+import type { SVGProps } from "react";
+
+type IconProps = SVGProps<SVGSVGElement>;
+
+const base = {
+  width: 20,
+  height: 20,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  strokeWidth: 2,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+export function DashboardIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </svg>
+  );
+}
+
+export function InventoryIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M21 8l-9-5-9 5 9 5 9-5z" />
+      <path d="M3 8v8l9 5 9-5V8" />
+      <path d="M12 13v8" />
+    </svg>
+  );
+}
+
+export function CompareIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M7 3v11a2 2 0 0 0 2 2h11" />
+      <path d="M7 8l-4 4 4 4" />
+      <path d="M17 21V10a2 2 0 0 0-2-2H4" />
+      <path d="M17 16l4-4-4-4" />
+    </svg>
+  );
+}
+
+export function IncomeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <rect x="2.5" y="6" width="19" height="13" rx="2" />
+      <path d="M2.5 10h19" />
+      <circle cx="16.5" cy="14.5" r="1.5" />
+    </svg>
+  );
+}
+
+export function BillsIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M6 2h12v18l-3-2-3 2-3-2-3 2V2z" />
+      <path d="M9 8h6" />
+      <path d="M9 12h6" />
+    </svg>
+  );
+}
+
+export function ReportsIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M3 21V9" />
+      <path d="M10 21V3" />
+      <path d="M17 21v-7" />
+      <path d="M3 21h18" />
+    </svg>
+  );
+}
+
+export function SearchIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+  );
+}
+
+export function MoreIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </svg>
+  );
+}
+
+export function LogoutIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+export function ShopIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M3 9l1.6-5.2A2 2 0 0 1 6.5 2.5h11a2 2 0 0 1 1.9 1.3L21 9" />
+      <path d="M3 9h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
+      <path d="M9 13a3 3 0 0 0 6 0" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+export function BarcodeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M3 7V4a1 1 0 0 1 1-1h3" />
+      <path d="M17 3h3a1 1 0 0 1 1 1v3" />
+      <path d="M21 17v3a1 1 0 0 1-1 1h-3" />
+      <path d="M7 21H4a1 1 0 0 1-1-1v-3" />
+      <path d="M7 8v8M10 8v8M13 8v8M17 8v8" />
+    </svg>
+  );
+}

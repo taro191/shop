@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .seg-item, .chip, .scan-btn, .rescan { cursor: pointer; }
+    .scan-btn:active { transform: scale(0.98); }
+    @keyframes scanline {
+      0% { top: 8%; }
+      50% { top: 88%; }
+      100% { top: 8%; }
+    }
+    .scan-line { animation: scanline 2.2s ease-in-out infinite; }
+  </style>
+</helmet>
+
+<div style="width:390px; height:844px; display:flex; flex-direction:column; background:oklch(0.985 0.004 90); overflow:hidden; position:relative;">
+
+  <!-- App bar -->
+  <div style="padding:20px 20px 4px 20px; flex-shrink:0;">
+    <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:21px; color:oklch(0.24 0.01 90);">เช็คราคาสินค้า</div>
+    <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-top:2px;">พิมพ์ชื่อหรือสแกนบาร์โค้ดเพื่อดูราคาล่าสุด</div>
+  </div>
+
+  <!-- Segmented control -->
+  <div style="padding:14px 20px 0 20px; flex-shrink:0;">
+    <div style="display:flex; background:oklch(0.94 0.004 90); border-radius:11px; padding:3px;">
+      <div class="seg-item" onClick="{{selectType}}" style="flex:1; text-align:center; padding:9px 0; border-radius:9px; font-size:13px; font-weight:{{typeWeight}}; background:{{typeBg}}; color:{{typeColor}}; box-shadow:{{typeShadow}};">พิมพ์ค้นหา</div>
+      <div class="seg-item" onClick="{{selectScan}}" style="flex:1; text-align:center; padding:9px 0; border-radius:9px; font-size:13px; font-weight:{{scanWeight}}; background:{{scanBg}}; color:{{scanColor}}; box-shadow:{{scanShadow}};">สแกนบาร์โค้ด</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div style="flex-grow:1; overflow-y:auto; padding:16px 20px 90px 20px;">
+
+    <!-- TYPE MODE -->
+    <sc-if value="{{isType}}" hint-placeholder-val="{{true}}">
+      <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:12px; padding:12px 14px; margin-bottom:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.5 0.01 90)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input type="text" placeholder="พิมพ์ชื่อสินค้า เช่น น้ำปลา, ข้าวสาร" value="{{query}}" onChange="{{onQueryChange}}" style="border:none; outline:none; font-size:14px; font-family:'Noto Sans Thai',sans-serif; flex-grow:1; background:transparent;" />
+      </div>
+
+      <sc-if value="{{showRecent}}" hint-placeholder-val="{{false}}">
+        <div style="font-size:12px; font-weight:600; color:oklch(0.5 0.01 90); margin-bottom:10px;">สินค้าที่ดูล่าสุด</div>
+        <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:16px; margin-bottom:4px;">
+          <sc-for list="{{recentChips}}" as="rc" hint-placeholder-count="4">
+            <div class="chip" onClick="{{rc.pick}}" style="flex-shrink:0; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:9px; padding:8px 14px; font-size:12.5px; color:oklch(0.35 0.01 90); white-space:nowrap;">{{rc.label}}</div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <sc-for list="{{results}}" as="p" hint-placeholder-count="5">
+          <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+            <div style="min-width:0;">
+              <div style="font-size:14px; font-weight:600; color:oklch(0.24 0.01 90); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{p.name}}</div>
+              <div style="font-size:11.5px; color:oklch(0.5 0.01 90); margin-top:3px;">{{p.category}} · หน่วยละ{{p.unit}}</div>
+            </div>
+            <div style="text-align:right; flex-shrink:0;">
+              <div style="font-family:'Kanit',sans-serif; font-size:18px; font-weight:700; color:oklch(0.24 0.01 90);">฿{{p.price}}</div>
+              <div style="font-size:10.5px; font-weight:600; margin-top:3px; padding:2px 8px; border-radius:6px; background:{{p.statusBg}}; color:{{p.statusColor}};">{{p.statusText}}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="text-align:center; padding:40px 20px; font-size:13px; color:oklch(0.55 0.01 90);">ไม่พบสินค้าที่ค้นหา</div>
+      </sc-if>
+    </sc-if>
+
+    <!-- SCAN MODE -->
+    <sc-if value="{{isScan}}" hint-placeholder-val="{{false}}">
+
+      <sc-if value="{{noResult}}" hint-placeholder-val="{{true}}">
+        <div style="position:relative; width:100%; aspect-ratio:1/1; max-height:280px; background:oklch(0.16 0 0); border-radius:18px; overflow:hidden; margin-bottom:20px;">
+          <div style="position:absolute; top:14%; left:14%; width:26px; height:26px; border-top:3px solid oklch(0.72 0.15 55); border-left:3px solid oklch(0.72 0.15 55); border-radius:4px 0 0 0;"></div>
+          <div style="position:absolute; top:14%; right:14%; width:26px; height:26px; border-top:3px solid oklch(0.72 0.15 55); border-right:3px solid oklch(0.72 0.15 55); border-radius:0 4px 0 0;"></div>
+          <div style="position:absolute; bottom:14%; left:14%; width:26px; height:26px; border-bottom:3px solid oklch(0.72 0.15 55); border-left:3px solid oklch(0.72 0.15 55); border-radius:0 0 0 4px;"></div>
+          <div style="position:absolute; bottom:14%; right:14%; width:26px; height:26px; border-bottom:3px solid oklch(0.72 0.15 55); border-right:3px solid oklch(0.72 0.15 55); border-radius:0 0 4px 0;"></div>
+          <div class="scan-line" style="position:absolute; left:14%; right:14%; height:2px; background:oklch(0.72 0.15 55 / 0.85); box-shadow:0 0 8px oklch(0.72 0.15 55 / 0.7);"></div>
+          <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:0 40px; text-align:center;">
+            <span style="font-size:12.5px; color:oklch(0.8 0 0); line-height:1.6;">วางบาร์โค้ดสินค้าให้อยู่ในกรอบ<br>แล้วแตะปุ่มด้านล่างเพื่อจำลองการสแกน</span>
+          </div>
+        </div>
+
+        <div class="scan-btn" onClick="{{doScan}}" style="display:flex; align-items:center; justify-content:center; gap:10px; background:oklch(0.72 0.15 55); border-radius:13px; padding:15px; margin-bottom:8px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(0.2 0.05 155)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V4a1 1 0 0 1 1-1h3"></path><path d="M17 3h3a1 1 0 0 1 1 1v3"></path><path d="M21 17v3a1 1 0 0 1-1 1h-3"></path><path d="M7 21H4a1 1 0 0 1-1-1v-3"></path><path d="M7 8v8M10 8v8M13 8v8M17 8v8"></path></svg>
+          <span style="font-size:14px; font-weight:700; color:oklch(0.2 0.05 155);">แตะเพื่อสแกนบาร์โค้ด</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{hasResult}}" hint-placeholder-val="{{false}}">
+        <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:18px; padding:24px 20px; text-align:center;">
+          <div style="width:44px; height:44px; border-radius:50%; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+          </div>
+          <div style="font-size:11.5px; color:oklch(0.5 0.01 90); margin-bottom:6px;">พบสินค้าจากบาร์โค้ด {{scanResult.barcode}}</div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:17px; color:oklch(0.24 0.01 90); margin-bottom:14px;">{{scanResult.name}}</div>
+          <div style="font-family:'Kanit',sans-serif; font-size:38px; font-weight:700; color:oklch(0.24 0.01 90);">฿{{scanResult.price}}</div>
+          <div style="font-size:12px; color:oklch(0.5 0.01 90); margin:6px 0 16px 0;">ราคาขายหน้าร้าน · หน่วยละ{{scanResult.unit}}</div>
+          <div style="display:inline-block; font-size:11.5px; font-weight:600; padding:5px 12px; border-radius:8px; background:{{scanResult.statusBg}}; color:{{scanResult.statusColor}}; margin-bottom:20px;">{{scanResult.statusText}}</div>
+          <div class="rescan" onClick="{{rescan}}" style="border:1.5px solid oklch(0.85 0.005 90); border-radius:11px; padding:13px; font-size:13.5px; font-weight:600; color:oklch(0.35 0.01 90);">สแกนใหม่</div>
+        </div>
+      </sc-if>
+
+    </sc-if>
+
+  </div>
+
+  <div style="position:absolute; left:0; right:0; bottom:0;">
+    <dc-import name="BottomNav" active="search" hint-size="390px,76px"></dc-import>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: 'type', query: '', scanResult: null, scanIndex: 0 };
+  }
+  renderVals() {
+    const PRODUCTS = [
+      { name: 'น้ำปลาตราปลาหมึก 700ml', category: 'เครื่องปรุง', unit: 'ขวด', price: 45, qty: 3, barcode: '8850001234017' },
+      { name: 'ข้าวสารหอมมะลิ 5kg', category: 'อาหารแห้ง', unit: 'ถุง', price: 210, qty: 2, barcode: '8850009876543' },
+      { name: 'ไข่ไก่เบอร์ 0', category: 'อาหารแห้ง', unit: 'แผง', price: 115, qty: 4, barcode: '8850004455667' },
+      { name: 'น้ำมันพืชตราองุ่น 1L', category: 'เครื่องปรุง', unit: 'ขวด', price: 62, qty: 5, barcode: '8850002233445' },
+      { name: 'น้ำอัดลมโคล่า 325ml', category: 'เครื่องดื่ม', unit: 'กระป๋อง', price: 15, qty: 48, barcode: '8850007788990' },
+      { name: 'มาม่าต้มยำกุ้ง', category: 'อาหารแห้ง', unit: 'ซอง', price: 7, qty: 120, barcode: '8850001112223' },
+      { name: 'ผงซักฟอกไบรท์ 1kg', category: 'ของใช้ในบ้าน', unit: 'ถุง', price: 52, qty: 18, barcode: '8850003344556' },
+      { name: 'สบู่ก้อนลักส์', category: 'ของใช้ในบ้าน', unit: 'ก้อน', price: 18, qty: 30, barcode: '8850005566778' },
+      { name: 'ขนมปังกรอบเวเฟอร์', category: 'ขนม', unit: 'ห่อ', price: 10, qty: 0, barcode: '8850006677889' },
+      { name: 'นมถั่วเหลืองแลคตาซอย', category: 'เครื่องดื่ม', unit: 'กล่อง', price: 16, qty: 22, barcode: '8850008899001' }
+    ];
+    const statusOf = (qty) => {
+      if (qty === 0) return { text: 'สินค้าหมด', bg: 'oklch(0.94 0.03 20)', color: 'oklch(0.58 0.19 25)' };
+      if (qty <= 8) return { text: 'ใกล้หมด', bg: 'oklch(0.95 0.04 55)', color: 'oklch(0.55 0.16 50)' };
+      return { text: 'พร้อมขาย', bg: 'oklch(0.94 0.03 152)', color: 'oklch(0.42 0.09 152)' };
+    };
+
+    const st = this.state;
+    const q = st.query.trim().toLowerCase();
+    const results = q === '' ? [] : PRODUCTS.filter((p) => p.name.toLowerCase().indexOf(q) !== -1).map((p) => {
+      const s = statusOf(p.qty);
+      return { ...p, statusText: s.text, statusBg: s.bg, statusColor: s.color };
+    });
+
+    const RECENT = ['น้ำปลาตราปลาหมึก 700ml', 'ข้าวสารหอมมะลิ 5kg', 'ไข่ไก่เบอร์ 0', 'น้ำอัดลมโคล่า 325ml'];
+    const recentChips = RECENT.map((label) => ({ label, pick: () => this.setState({ query: label }) }));
+
+    const scanPool = PRODUCTS.slice(0, 5);
+    const seg = (key) => {
+      const active = st.mode === key;
+      return {
+        bg: active ? '#ffffff' : 'transparent',
+        color: active ? 'oklch(0.42 0.09 152)' : 'oklch(0.5 0.01 90)',
+        weight: active ? '600' : '400',
+        shadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+      };
+    };
+    const t = seg('type'), sc = seg('scan');
+
+    let scanResultVal = null;
+    if (st.scanResult !== null) {
+      const p = scanPool[st.scanResult];
+      const s = statusOf(p.qty);
+      scanResultVal = { ...p, statusText: s.text, statusBg: s.bg, statusColor: s.color };
+    }
+
+    return {
+      isType: st.mode === 'type',
+      isScan: st.mode === 'scan',
+      selectType: () => this.setState({ mode: 'type' }),
+      selectScan: () => this.setState({ mode: 'scan' }),
+      typeBg: t.bg, typeColor: t.color, typeWeight: t.weight, typeShadow: t.shadow,
+      scanBg: sc.bg, scanColor: sc.color, scanWeight: sc.weight, scanShadow: sc.shadow,
+
+      query: st.query,
+      onQueryChange: (e) => this.setState({ query: e.target.value }),
+      showRecent: q === '',
+      recentChips,
+      results,
+      isEmpty: q !== '' && results.length === 0,
+
+      noResult: st.scanResult === null,
+      hasResult: st.scanResult !== null,
+      scanResult: scanResultVal,
+      doScan: () => {
+        const next = st.scanIndex % scanPool.length;
+        this.setState({ scanResult: next, scanIndex: st.scanIndex + 1 });
+      },
+      rescan: () => this.setState({ scanResult: null })
+    };
+  }
+}
+</script>
+</body>
+</html>

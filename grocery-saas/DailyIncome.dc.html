@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .day-tab, .chip { cursor: pointer; transition: background-color .12s ease, color .12s ease; }
+    .row-hover:hover { background: oklch(0.98 0.01 90); }
+  </style>
+</helmet>
+
+<div style="width:1440px; height:960px; display:flex; background:oklch(0.985 0.004 90); overflow:hidden;">
+
+  <dc-import name="Sidebar" active="income" hint-size="240px,960px"></dc-import>
+
+  <div style="flex-grow:1; height:960px; overflow-y:auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 32px 0 32px;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:24px; color:oklch(0.24 0.01 90);">รายรับรายวัน</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-top:2px;">สรุปยอดขายและช่องทางการชำระเงินของร้าน</div>
+      </div>
+      <div style="display:flex; gap:4px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:4px;">
+        <sc-for list="{{dayTabs}}" as="t" hint-placeholder-count="3">
+          <div class="day-tab" onClick="{{t.pick}}" style="padding:8px 16px; border-radius:7px; font-size:12.5px; font-weight:{{t.weight}}; background:{{t.bg}}; color:{{t.color}};">{{t.label}}</div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- Summary tiles -->
+    <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:18px; padding:24px 32px 0 32px;">
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">ยอดขายรวม</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:23px; font-weight:600; color:oklch(0.24 0.01 90); margin-top:8px;">฿{{total}}</div>
+      </div>
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">ต้นทุนสินค้าขาย</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:23px; font-weight:600; color:oklch(0.24 0.01 90); margin-top:8px;">฿{{cogs}}</div>
+      </div>
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">กำไรสุทธิ</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:23px; font-weight:600; color:oklch(0.42 0.09 152); margin-top:8px;">฿{{profit}}</div>
+      </div>
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px;">
+        <div style="font-size:12.5px; color:oklch(0.5 0.01 90);">จำนวนบิล / เฉลี่ยต่อบิล</div>
+        <div style="font-family:'Kanit',sans-serif; font-size:23px; font-weight:600; color:oklch(0.24 0.01 90); margin-top:8px;">{{count}} <span style="font-size:14px; font-weight:400; color:oklch(0.5 0.01 90);">/ ฿{{avg}}</span></div>
+      </div>
+    </div>
+
+    <!-- Payment breakdown -->
+    <div style="padding:20px 32px 0 32px;">
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:22px;">
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90); margin-bottom:16px;">สัดส่วนช่องทางการชำระเงิน</div>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="font-size:13px; color:oklch(0.3 0.01 90);">เงินสด</span>
+              <span style="font-size:13px; font-weight:600; color:oklch(0.24 0.01 90);">฿{{cash}} ({{cashPct}}%)</span>
+            </div>
+            <div style="width:100%; height:10px; background:oklch(0.94 0.03 152); border-radius:6px; overflow:hidden;">
+              <div style="width:{{cashPct}}%; height:100%; background:oklch(0.5 0.1 152); border-radius:6px;"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+              <span style="font-size:13px; color:oklch(0.3 0.01 90);">เงินโอน / QR พร้อมเพย์</span>
+              <span style="font-size:13px; font-weight:600; color:oklch(0.24 0.01 90);">฿{{transfer}} ({{transferPct}}%)</span>
+            </div>
+            <div style="width:100%; height:10px; background:oklch(0.95 0.04 55); border-radius:6px; overflow:hidden;">
+              <div style="width:{{transferPct}}%; height:100%; background:oklch(0.62 0.16 50); border-radius:6px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions -->
+    <div style="margin:20px 32px 32px 32px; background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden;">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 22px; border-bottom:1px solid oklch(0.94 0.004 90);">
+        <span style="font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90);">รายการขาย</span>
+        <div style="display:flex; gap:6px;">
+          <sc-for list="{{methodChips}}" as="m" hint-placeholder-count="3">
+            <div class="chip" onClick="{{m.pick}}" style="padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500; background:{{m.bg}}; color:{{m.color}}; border:1px solid {{m.border}};">{{m.label}}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:100px 1fr 130px 120px; padding:10px 22px; font-size:11.5px; color:oklch(0.5 0.01 90);">
+        <span>เวลา</span><span>รายการ</span><span>ช่องทาง</span><span style="text-align:right;">ยอดเงิน</span>
+      </div>
+      <sc-for list="{{txRows}}" as="tx" hint-placeholder-count="6">
+        <div class="row-hover" style="display:grid; grid-template-columns:100px 1fr 130px 120px; padding:12px 22px; align-items:center; border-top:1px solid oklch(0.96 0.004 90);">
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">{{tx.time}}</span>
+          <span style="font-size:13px; color:oklch(0.24 0.01 90);">{{tx.items}}</span>
+          <span style="font-size:11.5px; font-weight:600; color:{{tx.badgeColor}}; background:{{tx.badgeBg}}; border-radius:6px; padding:3px 8px; width:fit-content;">{{tx.methodLabel}}</span>
+          <span style="font-size:13px; font-weight:600; text-align:right; color:oklch(0.24 0.01 90);">฿{{tx.amount}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { day: 'today', method: 'all' };
+  }
+  renderVals() {
+    const DATASETS = {
+      today: {
+        label: 'วันนี้', cogs: 6270,
+        transactions: [
+          { time: '14:22', items: 'มาม่าต้มยำกุ้ง x3, น้ำอัดลม x2', method: 'cash', amount: 85 },
+          { time: '13:47', items: 'ผงซักฟอก 1kg, สบู่ก้อน x2', method: 'transfer', amount: 142 },
+          { time: '12:03', items: 'ข้าวสารหอมมะลิ 5kg', method: 'cash', amount: 210 },
+          { time: '11:15', items: 'ไข่ไก่เบอร์ 0 x2 แผง', method: 'transfer', amount: 230 },
+          { time: '09:50', items: 'น้ำปลา, น้ำมันพืช, ซอสปรุงรส', method: 'cash', amount: 138 },
+          { time: '08:30', items: 'นมถั่วเหลือง x6', method: 'transfer', amount: 96 }
+        ]
+      },
+      yesterday: {
+        label: 'เมื่อวาน', cogs: 5680,
+        transactions: [
+          { time: '19:40', items: 'ข้าวสาร, น้ำมันพืช, น้ำปลา', method: 'transfer', amount: 285 },
+          { time: '17:12', items: 'น้ำอัดลม x6, ขนมปังกรอบ x4', method: 'cash', amount: 130 },
+          { time: '15:05', items: 'ผงซักฟอก, สบู่, ยาสีฟัน', method: 'cash', amount: 176 },
+          { time: '12:48', items: 'มาม่า x10', method: 'transfer', amount: 70 },
+          { time: '10:20', items: 'ไข่ไก่ x1 แผง', method: 'cash', amount: 115 }
+        ]
+      },
+      week_ago: {
+        label: '7 วันก่อน', cogs: 5310,
+        transactions: [
+          { time: '18:02', items: 'น้ำมันพืช x3, ซอสมะเขือเทศ', method: 'cash', amount: 210 },
+          { time: '16:33', items: 'นมกล่อง x12', method: 'transfer', amount: 192 },
+          { time: '13:10', items: 'ข้าวสารหอมมะลิ x2 ถุง', method: 'cash', amount: 420 },
+          { time: '09:15', items: 'สบู่, แชมพู, ยาสีฟัน', method: 'transfer', amount: 165 }
+        ]
+      }
+    };
+
+    const st = this.state;
+    const ds = DATASETS[st.day];
+    const total = ds.transactions.reduce((s, t) => s + t.amount, 0);
+    const cash = ds.transactions.filter((t) => t.method === 'cash').reduce((s, t) => s + t.amount, 0);
+    const transfer = total - cash;
+    const count = ds.transactions.length;
+    const profit = total - ds.cogs;
+    const avg = Math.round(total / count);
+    const cashPct = Math.round((cash / total) * 100);
+    const transferPct = 100 - cashPct;
+
+    const dayTabs = [
+      { key: 'today', label: 'วันนี้' },
+      { key: 'yesterday', label: 'เมื่อวาน' },
+      { key: 'week_ago', label: '7 วันก่อน' }
+    ].map((d) => {
+      const active = st.day === d.key;
+      return {
+        label: d.label,
+        bg: active ? 'oklch(0.42 0.09 152)' : 'transparent',
+        color: active ? '#ffffff' : 'oklch(0.4 0.01 90)',
+        weight: active ? '600' : '400',
+        pick: () => this.setState({ day: d.key })
+      };
+    });
+
+    const methodChips = [
+      { key: 'all', label: 'ทั้งหมด' },
+      { key: 'cash', label: 'เงินสด' },
+      { key: 'transfer', label: 'เงินโอน' }
+    ].map((m) => {
+      const active = st.method === m.key;
+      return {
+        label: m.label,
+        bg: active ? 'oklch(0.42 0.09 152)' : '#ffffff',
+        color: active ? '#ffffff' : 'oklch(0.4 0.01 90)',
+        border: active ? 'oklch(0.42 0.09 152)' : 'oklch(0.88 0.005 90)',
+        pick: () => this.setState({ method: m.key })
+      };
+    });
+
+    const txRows = ds.transactions
+      .filter((t) => st.method === 'all' || t.method === st.method)
+      .map((t) => ({
+        time: t.time,
+        items: t.items,
+        amount: t.amount,
+        methodLabel: t.method === 'cash' ? 'เงินสด' : 'เงินโอน',
+        badgeBg: t.method === 'cash' ? 'oklch(0.94 0.03 152)' : 'oklch(0.95 0.04 55)',
+        badgeColor: t.method === 'cash' ? 'oklch(0.42 0.09 152)' : 'oklch(0.55 0.16 50)'
+      }));
+
+    return {
+      dayTabs, methodChips, txRows,
+      total, cogs: ds.cogs, profit, count, avg,
+      cash, transfer, cashPct, transferPct
+    };
+  }
+}
+</script>
+</body>
+</html>

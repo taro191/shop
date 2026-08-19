@@ -1,0 +1,234 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .period-tab { transition: background-color .12s ease, color .12s ease; cursor: pointer; }
+    .refill-btn:hover { background: oklch(0.95 0.04 55); }
+    .row-hover:hover { background: oklch(0.98 0.01 90); }
+  </style>
+</helmet>
+
+<div style="width:1440px; height:960px; display:flex; background:oklch(0.985 0.004 90); overflow:hidden;">
+
+  <dc-import name="Sidebar" active="dashboard" hint-size="240px,960px"></dc-import>
+
+  <div style="flex-grow:1; height:960px; overflow-y:auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 32px 0 32px;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:24px; color:oklch(0.24 0.01 90);">แดชบอร์ด</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-top:2px;">ภาพรวมร้านค้าประจำวันที่ 19 สิงหาคม 2569</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:9px 14px; width:220px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.01 90)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+          <span style="font-size:13px; color:oklch(0.6 0.01 90);">ค้นหาสินค้า, บิล...</span>
+        </div>
+        <div style="width:38px; height:38px; border-radius:10px; background:#fff; border:1px solid oklch(0.9 0.005 90); display:flex; align-items:center; justify-content:center; position:relative;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.4 0.01 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+          <span style="position:absolute; top:7px; right:8px; width:7px; height:7px; border-radius:50%; background:oklch(0.7 0.16 50); border:1.5px solid #fff;"></span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; background:oklch(0.42 0.09 152); border-radius:10px; padding:9px 16px; cursor:pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+          <span style="font-size:13px; font-weight:600; color:#fff;">บันทึกยอดขาย</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat tiles -->
+    <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:18px; padding:24px 32px 0 32px;">
+
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">ยอดขายวันนี้</span>
+          <div style="width:32px; height:32px; border-radius:9px; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 9l-5 5-4-4-4 4"></path></svg>
+          </div>
+        </div>
+        <div style="font-family:'Kanit',sans-serif; font-size:24px; font-weight:600; color:oklch(0.24 0.01 90);">฿ 8,420</div>
+        <div style="font-size:12px; color:oklch(0.5 0.13 152); display:flex; align-items:center; gap:4px;">▲ 12.4% จากเมื่อวาน</div>
+      </div>
+
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">กำไรสุทธิวันนี้ (ประมาณ)</span>
+          <div style="width:32px; height:32px; border-radius:9px; background:oklch(0.95 0.04 55); display:flex; align-items:center; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.16 50)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M9 10h5.5a1.5 1.5 0 0 1 0 3H9"></path></svg>
+          </div>
+        </div>
+        <div style="font-family:'Kanit',sans-serif; font-size:24px; font-weight:600; color:oklch(0.24 0.01 90);">฿ 2,150</div>
+        <div style="font-size:12px; color:oklch(0.5 0.01 90);">อัตรากำไร 25.5%</div>
+      </div>
+
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">สินค้าใกล้หมดสต๊อก</span>
+          <div style="width:32px; height:32px; border-radius:9px; background:oklch(0.95 0.04 55); display:flex; align-items:center; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.6 0.17 45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><circle cx="12" cy="16.2" r="0.3" fill="oklch(0.6 0.17 45)"></circle><path d="M10.3 3.9L2.5 18a1.5 1.5 0 0 0 1.3 2.2h16.4a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0z"></path></svg>
+          </div>
+        </div>
+        <div style="font-family:'Kanit',sans-serif; font-size:24px; font-weight:600; color:oklch(0.24 0.01 90);">7 รายการ</div>
+        <div style="font-size:12px; color:oklch(0.6 0.17 45);">ควรสั่งซื้อเพิ่มเร็วๆ นี้</div>
+      </div>
+
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">บิลค้างชำระซัพพลายเออร์</span>
+          <div style="width:32px; height:32px; border-radius:9px; background:oklch(0.94 0.03 20); display:flex; align-items:center; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.58 0.19 25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v18l-3-2-3 2-3-2-3 2V2z"></path></svg>
+          </div>
+        </div>
+        <div style="font-family:'Kanit',sans-serif; font-size:24px; font-weight:600; color:oklch(0.24 0.01 90);">฿ 12,300</div>
+        <div style="font-size:12px; color:oklch(0.58 0.19 25);">3 บิล ครบกำหนดสัปดาห์นี้</div>
+      </div>
+
+    </div>
+
+    <!-- Chart + side panels -->
+    <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:18px; padding:20px 32px 32px 32px;">
+
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:22px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90);">ยอดขายย้อนหลัง</div>
+          <div style="display:flex; gap:4px; background:oklch(0.96 0.004 90); border-radius:9px; padding:3px;">
+            <div class="period-tab" onClick="{{selectToday}}" style="padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:{{tabTodayWeight}}; background:{{tabTodayBg}}; color:{{tabTodayColor}};">วันนี้</div>
+            <div class="period-tab" onClick="{{selectWeek}}" style="padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:{{tabWeekWeight}}; background:{{tabWeekBg}}; color:{{tabWeekColor}};">7 วัน</div>
+            <div class="period-tab" onClick="{{selectMonth}}" style="padding:6px 12px; border-radius:7px; font-size:12.5px; font-weight:{{tabMonthWeight}}; background:{{tabMonthBg}}; color:{{tabMonthColor}};">30 วัน</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:flex-end; gap:14px; height:150px; padding:0 4px;">
+          <sc-for list="{{bars}}" as="bar" hint-placeholder-count="7">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px; flex-grow:1;">
+              <span style="font-size:11px; color:oklch(0.5 0.01 90);">{{bar.value}}</span>
+              <div style="width:100%; max-width:34px; height:{{bar.px}}px; background:oklch(0.55 0.1 152); border-radius:6px 6px 3px 3px;"></div>
+              <span style="font-size:11.5px; color:oklch(0.5 0.01 90);">{{bar.label}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; padding:22px; display:flex; flex-direction:column; gap:14px;">
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90);">สินค้าใกล้หมดสต๊อก</div>
+
+        <div class="refill-btn" style="display:flex; align-items:center; justify-content:space-between; padding:10px 4px; border-bottom:1px solid oklch(0.94 0.004 90);">
+          <div>
+            <div style="font-size:13px; font-weight:500; color:oklch(0.24 0.01 90);">น้ำปลาตราปลาหมึก 700ml</div>
+            <div style="font-size:11.5px; color:oklch(0.58 0.19 25);">เหลือ 3 ขวด</div>
+          </div>
+          <span style="font-size:11.5px; color:oklch(0.55 0.16 50); font-weight:600;">สั่งเพิ่ม</span>
+        </div>
+        <div class="refill-btn" style="display:flex; align-items:center; justify-content:space-between; padding:10px 4px; border-bottom:1px solid oklch(0.94 0.004 90);">
+          <div>
+            <div style="font-size:13px; font-weight:500; color:oklch(0.24 0.01 90);">ข้าวสารหอมมะลิ 5kg</div>
+            <div style="font-size:11.5px; color:oklch(0.58 0.19 25);">เหลือ 2 ถุง</div>
+          </div>
+          <span style="font-size:11.5px; color:oklch(0.55 0.16 50); font-weight:600;">สั่งเพิ่ม</span>
+        </div>
+        <div class="refill-btn" style="display:flex; align-items:center; justify-content:space-between; padding:10px 4px; border-bottom:1px solid oklch(0.94 0.004 90);">
+          <div>
+            <div style="font-size:13px; font-weight:500; color:oklch(0.24 0.01 90);">ไข่ไก่เบอร์ 0 (แผง)</div>
+            <div style="font-size:11.5px; color:oklch(0.6 0.17 45);">เหลือ 4 แผง</div>
+          </div>
+          <span style="font-size:11.5px; color:oklch(0.55 0.16 50); font-weight:600;">สั่งเพิ่ม</span>
+        </div>
+        <div class="refill-btn" style="display:flex; align-items:center; justify-content:space-between; padding:10px 4px;">
+          <div>
+            <div style="font-size:13px; font-weight:500; color:oklch(0.24 0.01 90);">น้ำมันพืชตราองุ่น 1L</div>
+            <div style="font-size:11.5px; color:oklch(0.6 0.17 45);">เหลือ 5 ขวด</div>
+          </div>
+          <span style="font-size:11.5px; color:oklch(0.55 0.16 50); font-weight:600;">สั่งเพิ่ม</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Recent transactions -->
+    <div style="margin:0 32px 32px 32px; background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden;">
+      <div style="padding:18px 22px; border-bottom:1px solid oklch(0.94 0.004 90); font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:oklch(0.24 0.01 90);">รายการขายล่าสุด</div>
+      <div style="display:grid; grid-template-columns:1fr 100px 120px 120px; padding:10px 22px; font-size:11.5px; color:oklch(0.5 0.01 90);">
+        <span>รายการ</span><span>เวลา</span><span>ช่องทาง</span><span style="text-align:right;">ยอดเงิน</span>
+      </div>
+      <div class="row-hover" style="display:grid; grid-template-columns:1fr 100px 120px 120px; padding:12px 22px; align-items:center; border-top:1px solid oklch(0.96 0.004 90);">
+        <span style="font-size:13px; color:oklch(0.24 0.01 90);">มาม่าต้มยำกุ้ง x3, น้ำอัดลม x2</span>
+        <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">14:22</span>
+        <span style="font-size:11.5px; font-weight:600; color:oklch(0.42 0.09 152); background:oklch(0.94 0.03 152); border-radius:6px; padding:3px 8px; width:fit-content;">เงินสด</span>
+        <span style="font-size:13px; font-weight:600; text-align:right; color:oklch(0.24 0.01 90);">฿ 85</span>
+      </div>
+      <div class="row-hover" style="display:grid; grid-template-columns:1fr 100px 120px 120px; padding:12px 22px; align-items:center; border-top:1px solid oklch(0.96 0.004 90);">
+        <span style="font-size:13px; color:oklch(0.24 0.01 90);">ผงซักฟอก 1kg, สบู่ก้อน x2</span>
+        <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">13:47</span>
+        <span style="font-size:11.5px; font-weight:600; color:oklch(0.55 0.16 50); background:oklch(0.95 0.04 55); border-radius:6px; padding:3px 8px; width:fit-content;">โอนเงิน</span>
+        <span style="font-size:13px; font-weight:600; text-align:right; color:oklch(0.24 0.01 90);">฿ 142</span>
+      </div>
+      <div class="row-hover" style="display:grid; grid-template-columns:1fr 100px 120px 120px; padding:12px 22px; align-items:center; border-top:1px solid oklch(0.96 0.004 90);">
+        <span style="font-size:13px; color:oklch(0.24 0.01 90);">ข้าวสารหอมมะลิ 5kg</span>
+        <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">12:03</span>
+        <span style="font-size:11.5px; font-weight:600; color:oklch(0.42 0.09 152); background:oklch(0.94 0.03 152); border-radius:6px; padding:3px 8px; width:fit-content;">เงินสด</span>
+        <span style="font-size:13px; font-weight:600; text-align:right; color:oklch(0.24 0.01 90);">฿ 210</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { period: '7d' };
+  }
+  renderVals() {
+    const DATA = {
+      today: [
+        { label: 'เช้า', value: 620 }, { label: 'สาย', value: 1450 },
+        { label: 'เที่ยง', value: 2380 }, { label: 'บ่าย', value: 1620 },
+        { label: 'เย็น', value: 2050 }, { label: 'ค่ำ', value: 900 }
+      ],
+      '7d': [
+        { label: 'จ.', value: 6200 }, { label: 'อ.', value: 5400 }, { label: 'พ.', value: 7100 },
+        { label: 'พฤ.', value: 6800 }, { label: 'ศ.', value: 8420 }, { label: 'ส.', value: 9600 }, { label: 'อา.', value: 8900 }
+      ],
+      '30d': [
+        { label: 'สัปดาห์ 1', value: 38200 }, { label: 'สัปดาห์ 2', value: 41500 },
+        { label: 'สัปดาห์ 3', value: 39800 }, { label: 'สัปดาห์ 4', value: 45300 }
+      ]
+    };
+    const period = this.state.period;
+    const set = DATA[period];
+    const max = Math.max(...set.map(d => d.value));
+    const bars = set.map(d => ({
+      label: d.label,
+      value: d.value >= 1000 ? (d.value / 1000).toFixed(1) + 'k' : d.value,
+      px: Math.round((d.value / max) * 140)
+    }));
+    const tab = (key) => ({
+      bg: period === key ? '#ffffff' : 'transparent',
+      color: period === key ? 'oklch(0.42 0.09 152)' : 'oklch(0.5 0.01 90)',
+      weight: period === key ? '600' : '400'
+    });
+    const t = tab('today'), w = tab('7d'), m = tab('30d');
+    return {
+      bars,
+      tabTodayBg: t.bg, tabTodayColor: t.color, tabTodayWeight: t.weight,
+      tabWeekBg: w.bg, tabWeekColor: w.color, tabWeekWeight: w.weight,
+      tabMonthBg: m.bg, tabMonthColor: m.color, tabMonthWeight: m.weight,
+      selectToday: () => this.setState({ period: 'today' }),
+      selectWeek: () => this.setState({ period: '7d' }),
+      selectMonth: () => this.setState({ period: '30d' })
+    };
+  }
+}
+</script>
+</body>
+</html>

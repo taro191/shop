@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; }
+    a { color: #b45309; } a:hover { color: #92400e; }
+    .chip { cursor: pointer; transition: background-color .12s ease, color .12s ease; }
+    .bill-header:hover { background: oklch(0.98 0.01 90); }
+    .field input, .field select { width: 100%; font-family: 'Noto Sans Thai', sans-serif; font-size: 13px; padding: 10px 12px; border-radius: 9px; border: 1px solid oklch(0.88 0.005 90); outline: none; box-sizing: border-box; }
+    .field input:focus, .field select:focus { border-color: oklch(0.6 0.1 152); }
+    .field label { font-size: 12px; color: oklch(0.45 0.01 90); margin-bottom: 6px; display: block; }
+    .btn-primary:hover { background: oklch(0.38 0.09 152); }
+    .btn-ghost:hover { background: oklch(0.96 0.004 90); }
+    .icon-btn:hover { background: oklch(0.96 0.004 90); }
+  </style>
+</helmet>
+
+<div style="width:1440px; height:960px; display:flex; background:oklch(0.985 0.004 90); overflow:hidden; position:relative;">
+
+  <dc-import name="Sidebar" active="bills" hint-size="240px,960px"></dc-import>
+
+  <div style="flex-grow:1; height:960px; overflow-y:auto;">
+
+    <!-- Top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 32px 0 32px;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:24px; color:oklch(0.24 0.01 90);">บิลซื้อสินค้า</div>
+        <div style="font-size:13px; color:oklch(0.5 0.01 90); margin-top:2px;">รวมค้างชำระ ฿{{pendingTotal}} จาก {{pendingCount}} บิล</div>
+      </div>
+      <div class="btn-primary" onClick="{{openPanel}}" style="display:flex; align-items:center; gap:8px; background:oklch(0.42 0.09 152); border-radius:10px; padding:11px 18px; cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+        <span style="font-size:13px; font-weight:600; color:#fff;">เพิ่มบิลใหม่</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 32px 0 32px; gap:16px;">
+      <div style="display:flex; gap:8px;">
+        <sc-for list="{{statusChips}}" as="chip" hint-placeholder-count="4">
+          <div class="chip" onClick="{{chip.pick}}" style="padding:8px 16px; border-radius:9px; font-size:12.5px; font-weight:500; background:{{chip.bg}}; color:{{chip.color}}; border:1px solid {{chip.border}};">{{chip.label}}</div>
+        </sc-for>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:10px; padding:9px 14px; width:260px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.01 90)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+        <input type="text" placeholder="ค้นหาเลขที่บิล, ซัพพลายเออร์..." value="{{search}}" onChange="{{onSearch}}" style="border:none; outline:none; font-size:13px; font-family:'Noto Sans Thai',sans-serif; flex-grow:1; background:transparent;" />
+      </div>
+    </div>
+
+    <!-- Bill list -->
+    <div style="margin:20px 32px 32px 32px; background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:14px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:140px 1.4fr 120px 1fr 120px 24px; padding:12px 22px; font-size:11.5px; color:oklch(0.5 0.01 90); border-bottom:1px solid oklch(0.94 0.004 90);">
+        <span>เลขที่บิล</span><span>ซัพพลายเออร์</span><span>วันที่</span><span style="text-align:right;">ยอดเงิน</span><span>สถานะ</span><span></span>
+      </div>
+
+      <sc-for list="{{rows}}" as="b" hint-placeholder-count="6">
+        <div style="border-top:1px solid oklch(0.96 0.004 90);">
+          <div class="bill-header" onClick="{{b.toggle}}" style="display:grid; grid-template-columns:140px 1.4fr 120px 1fr 120px 24px; padding:13px 22px; align-items:center; cursor:pointer;">
+            <span style="font-size:13px; font-weight:600; color:oklch(0.24 0.01 90);">{{b.billNo}}</span>
+            <span style="font-size:13px; color:oklch(0.3 0.01 90);">{{b.supplier}}</span>
+            <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">{{b.date}}</span>
+            <span style="font-size:13px; font-weight:600; text-align:right; color:oklch(0.24 0.01 90);">฿{{b.amount}}</span>
+            <span style="font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:7px; width:fit-content; background:{{b.statusBg}}; color:{{b.statusColor}};">{{b.statusText}}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.5 0.01 90)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate({{b.chevronRotate}}deg); transition:transform .12s ease;"><path d="M6 9l6 6 6-6"></path></svg>
+          </div>
+
+          <sc-if value="{{b.expanded}}" hint-placeholder-val="{{false}}">
+            <div style="padding:6px 22px 18px 22px; background:oklch(0.99 0.002 90);">
+              <div style="display:grid; grid-template-columns:1fr 100px 120px 120px; padding:8px 14px; font-size:11px; color:oklch(0.5 0.01 90);">
+                <span>รายการสินค้า</span><span>จำนวน</span><span>ราคา/หน่วย</span><span style="text-align:right;">รวม</span>
+              </div>
+              <sc-for list="{{b.lineItems}}" as="li" hint-placeholder-count="3">
+                <div style="display:grid; grid-template-columns:1fr 100px 120px 120px; padding:8px 14px; background:#fff; border-radius:8px; margin-bottom:4px;">
+                  <span style="font-size:12.5px; color:oklch(0.3 0.01 90);">{{li.name}}</span>
+                  <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">{{li.qty}}</span>
+                  <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">฿{{li.unitPrice}}</span>
+                  <span style="font-size:12.5px; font-weight:600; text-align:right; color:oklch(0.24 0.01 90);">฿{{li.subtotal}}</span>
+                </div>
+              </sc-for>
+              <sc-if value="{{b.noItems}}" hint-placeholder-val="{{false}}">
+                <div style="padding:14px; font-size:12.5px; color:oklch(0.55 0.01 90); text-align:center;">ไม่มีรายการสินค้าแนบในบิลนี้</div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="padding:48px; text-align:center; font-size:13px; color:oklch(0.55 0.01 90);">ไม่พบบิลที่ค้นหา</div>
+      </sc-if>
+    </div>
+
+  </div>
+
+  <!-- Add bill slide-over -->
+  <sc-if value="{{panelOpen}}" hint-placeholder-val="{{false}}">
+    <div onClick="{{closePanel}}" style="position:absolute; inset:0; background:rgba(20,25,20,0.35);"></div>
+    <div style="position:absolute; top:0; right:0; width:380px; height:960px; background:#fff; box-shadow:-8px 0 24px rgba(0,0,0,0.08); display:flex; flex-direction:column;">
+      <div style="padding:22px 24px; border-bottom:1px solid oklch(0.94 0.004 90); display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-family:'Kanit',sans-serif; font-weight:600; font-size:17px; color:oklch(0.24 0.01 90);">เพิ่มบิลซื้อสินค้า</span>
+        <div class="icon-btn" onClick="{{closePanel}}" style="width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="oklch(0.4 0.01 90)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+        </div>
+      </div>
+      <div style="padding:22px 24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex-grow:1;">
+        <div class="field">
+          <label>เลขที่บิล</label>
+          <input type="text" placeholder="เช่น INV-1042" value="{{form.billNo}}" onChange="{{setBillNo}}" />
+        </div>
+        <div class="field">
+          <label>ซัพพลายเออร์</label>
+          <select value="{{form.supplier}}" onChange="{{setSupplier}}">
+            <option value="สมบูรณ์การค้า">สมบูรณ์การค้า</option>
+            <option value="ทองดีพาณิชย์">ทองดีพาณิชย์</option>
+            <option value="แม่ประนอมโฮลเซล">แม่ประนอมโฮลเซล</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>วันที่ซื้อ</label>
+          <input type="text" placeholder="วว/ดด/ปปปป" value="{{form.date}}" onChange="{{setDate}}" />
+        </div>
+        <div class="field">
+          <label>ยอดเงินรวม (บาท)</label>
+          <input type="text" placeholder="0" value="{{form.amount}}" onChange="{{setAmount}}" />
+        </div>
+        <div class="field">
+          <label>สถานะ</label>
+          <select value="{{form.status}}" onChange="{{setStatus}}">
+            <option value="pending">รอชำระ</option>
+            <option value="paid">ชำระแล้ว</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding:18px 24px; border-top:1px solid oklch(0.94 0.004 90); display:flex; gap:10px;">
+        <div class="btn-ghost" onClick="{{closePanel}}" style="flex-grow:1; text-align:center; padding:11px; border-radius:10px; border:1px solid oklch(0.88 0.005 90); font-size:13px; font-weight:600; color:oklch(0.4 0.01 90); cursor:pointer;">ยกเลิก</div>
+        <div class="btn-primary" onClick="{{saveBill}}" style="flex-grow:1; text-align:center; padding:11px; border-radius:10px; background:oklch(0.42 0.09 152); font-size:13px; font-weight:600; color:#fff; cursor:pointer;">บันทึกบิล</div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      search: '',
+      status: 'all',
+      panelOpen: false,
+      expandedId: null,
+      form: { billNo: '', supplier: 'สมบูรณ์การค้า', date: '', amount: '', status: 'pending' },
+      bills: [
+        { id: 1, billNo: 'INV-1038', supplier: 'สมบูรณ์การค้า', date: '18 ส.ค. 2569', amount: 4820, status: 'paid',
+          lineItems: [
+            { name: 'ข้าวสารหอมมะลิ 5kg', qty: '10 ถุง', unitPrice: 175, subtotal: 1750 },
+            { name: 'น้ำมันพืชตราองุ่น 1L', qty: '20 ขวด', unitPrice: 47, subtotal: 940 },
+            { name: 'น้ำปลาตราปลาหมึก 700ml', qty: '30 ขวด', unitPrice: 32, subtotal: 960 }
+          ] },
+        { id: 2, billNo: 'INV-1041', supplier: 'ทองดีพาณิชย์', date: '17 ส.ค. 2569', amount: 3150, status: 'pending',
+          lineItems: [
+            { name: 'มาม่าต้มยำกุ้ง (ลัง)', qty: '5 ลัง', unitPrice: 150, subtotal: 750 },
+            { name: 'ผงซักฟอกไบรท์ 1kg', qty: '30 ถุง', unitPrice: 39.5, subtotal: 1185 }
+          ] },
+        { id: 3, billNo: 'INV-1044', supplier: 'แม่ประนอมโฮลเซล', date: '15 ส.ค. 2569', amount: 2680, status: 'overdue', lineItems: [] },
+        { id: 4, billNo: 'INV-1046', supplier: 'สมบูรณ์การค้า', date: '14 ส.ค. 2569', amount: 5920, status: 'paid', lineItems: [] },
+        { id: 5, billNo: 'INV-1049', supplier: 'ทองดีพาณิชย์', date: '12 ส.ค. 2569', amount: 1980, status: 'pending', lineItems: [] },
+        { id: 6, billNo: 'INV-1051', supplier: 'แม่ประนอมโฮลเซล', date: '10 ส.ค. 2569', amount: 3420, status: 'paid', lineItems: [] }
+      ]
+    };
+  }
+  renderVals() {
+    const st = this.state;
+    const STATUS_META = {
+      pending: { text: 'รอชำระ', bg: 'oklch(0.95 0.04 55)', color: 'oklch(0.55 0.16 50)' },
+      paid: { text: 'ชำระแล้ว', bg: 'oklch(0.94 0.03 152)', color: 'oklch(0.42 0.09 152)' },
+      overdue: { text: 'เกินกำหนด', bg: 'oklch(0.94 0.03 20)', color: 'oklch(0.58 0.19 25)' }
+    };
+
+    const statusChips = [
+      { key: 'all', label: 'ทั้งหมด' },
+      { key: 'pending', label: 'รอชำระ' },
+      { key: 'paid', label: 'ชำระแล้ว' },
+      { key: 'overdue', label: 'เกินกำหนด' }
+    ].map((s) => {
+      const active = st.status === s.key;
+      return {
+        label: s.label,
+        bg: active ? 'oklch(0.42 0.09 152)' : '#ffffff',
+        color: active ? '#ffffff' : 'oklch(0.4 0.01 90)',
+        border: active ? 'oklch(0.42 0.09 152)' : 'oklch(0.88 0.005 90)',
+        pick: () => this.setState({ status: s.key })
+      };
+    });
+
+    const q = st.search.trim().toLowerCase();
+    const filtered = st.bills.filter((b) =>
+      (st.status === 'all' || b.status === st.status) &&
+      (q === '' || b.billNo.toLowerCase().indexOf(q) !== -1 || b.supplier.toLowerCase().indexOf(q) !== -1)
+    );
+
+    const rows = filtered.map((b) => {
+      const meta = STATUS_META[b.status];
+      const expanded = st.expandedId === b.id;
+      return {
+        ...b,
+        statusText: meta.text, statusBg: meta.bg, statusColor: meta.color,
+        expanded,
+        chevronRotate: expanded ? 180 : 0,
+        noItems: b.lineItems.length === 0,
+        toggle: () => this.setState({ expandedId: expanded ? null : b.id })
+      };
+    });
+
+    const pending = st.bills.filter((b) => b.status === 'pending' || b.status === 'overdue');
+    const pendingTotal = pending.reduce((s, b) => s + b.amount, 0);
+
+    const updateField = (field) => (e) => {
+      this.setState({ form: { ...this.state.form, [field]: e.target.value } });
+    };
+
+    return {
+      pendingTotal, pendingCount: pending.length,
+      statusChips, rows,
+      isEmpty: rows.length === 0,
+      search: st.search,
+      onSearch: (e) => this.setState({ search: e.target.value }),
+      panelOpen: st.panelOpen,
+      openPanel: () => this.setState({ panelOpen: true }),
+      closePanel: () => this.setState({ panelOpen: false }),
+      form: st.form,
+      setBillNo: updateField('billNo'),
+      setSupplier: updateField('supplier'),
+      setDate: updateField('date'),
+      setAmount: updateField('amount'),
+      setStatus: updateField('status'),
+      saveBill: () => {
+        const f = this.state.form;
+        if (!f.billNo.trim()) return;
+        const newBill = {
+          id: Date.now(),
+          billNo: f.billNo.trim(),
+          supplier: f.supplier,
+          date: f.date.trim() || '19 ส.ค. 2569',
+          amount: parseFloat(f.amount) || 0,
+          status: f.status,
+          lineItems: []
+        };
+        this.setState({
+          bills: [newBill, ...this.state.bills],
+          panelOpen: false,
+          form: { billNo: '', supplier: 'สมบูรณ์การค้า', date: '', amount: '', status: 'pending' }
+        });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+// Prisma schema for the grocery-store SaaS.
+// Multi-tenant: every business table carries a storeId and is always
+// queried/written scoped to the signed-in user's store.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+}
+
+enum BillStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+model Store {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("trial")
+  createdAt DateTime @default(now())
+
+  users        User[]
+  products     Product[]
+  suppliers    Supplier[]
+  bills        PurchaseBill[]
+  transactions IncomeTransaction[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String   @unique
+  passwordHash String
+  role         Role     @default(OWNER)
+  createdAt    DateTime @default(now())
+
+  @@index([storeId])
+}
+
+model Product {
+  id                  String    @id @default(cuid())
+  storeId             String
+  store               Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name                String
+  category            String
+  unit                String
+  barcode             String?
+  costPrice           Float
+  sellPrice           Float
+  quantity            Int       @default(0)
+  preferredSupplierId String?
+  preferredSupplier   Supplier? @relation("PreferredSupplier", fields: [preferredSupplierId], references: [id], onDelete: SetNull)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  supplierPrices SupplierPrice[]
+  billLineItems  BillLineItem[]
+
+  @@unique([storeId, barcode])
+  @@index([storeId])
+  @@index([storeId, name])
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  createdAt DateTime @default(now())
+
+  prices              SupplierPrice[]
+  bills               PurchaseBill[]
+  preferredByProducts Product[]       @relation("PreferredSupplier")
+
+  @@index([storeId])
+}
+
+model SupplierPrice {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  price      Float
+  updatedAt  DateTime @updatedAt
+
+  @@unique([productId, supplierId])
+  @@index([productId])
+}
+
+model IncomeTransaction {
+  id     String        @id @default(cuid())
+  storeId String
+  store  Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items  String
+  method PaymentMethod
+  amount Float
+  soldAt DateTime      @default(now())
+
+  @@index([storeId, soldAt])
+}
+
+model PurchaseBill {
+  id         String     @id @default(cuid())
+  storeId    String
+  store      Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  billNo     String
+  supplierId String
+  supplier   Supplier   @relation(fields: [supplierId], references: [id])
+  amount     Float
+  status     BillStatus @default(PENDING)
+  billDate   DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+
+  lineItems BillLineItem[]
+
+  @@index([storeId, billDate])
+}
+
+model BillLineItem {
+  id        String        @id @default(cuid())
+  billId    String
+  bill      PurchaseBill  @relation(fields: [billId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name      String
+  qtyLabel  String
+  unitPrice Float
+  subtotal  Float
+
+  @@index([billId])
+}

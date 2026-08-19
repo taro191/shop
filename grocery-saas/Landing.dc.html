@@ -1,0 +1,421 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif; background: #ffffff; }
+    a { color: #b45309; text-decoration: none; } a:hover { color: #92400e; }
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+    .btn-cta { cursor: pointer; transition: background-color .15s ease, transform .1s ease; }
+    .btn-cta:hover { background: oklch(0.65 0.16 50); }
+    .btn-outline:hover { background: oklch(0.97 0.01 152); }
+    .nav-link:hover { color: oklch(0.42 0.09 152); }
+    .feature-card { transition: box-shadow .15s ease, transform .15s ease; }
+    .feature-card:hover { box-shadow: 0 12px 28px rgba(30,60,40,0.08); transform: translateY(-2px); }
+    .pricing-card { transition: box-shadow .15s ease; }
+    .toggle { cursor: pointer; }
+    .field input { width: 100%; font-family: 'Noto Sans Thai', sans-serif; font-size: 14px; padding: 12px 14px; border-radius: 10px; border: 1px solid oklch(0.87 0.005 90); outline: none; box-sizing: border-box; }
+    .field input:focus { border-color: oklch(0.6 0.1 152); }
+    .field label { font-size: 12.5px; font-weight: 600; color: oklch(0.4 0.01 90); margin-bottom: 6px; display: block; }
+    .reset-link { cursor: pointer; }
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr !important; }
+      .nav-links { display: none !important; }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+      .pricing-grid { grid-template-columns: 1fr !important; }
+      .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+    }
+  </style>
+</helmet>
+
+<div style="width:100%; font-family:'Noto Sans Thai',sans-serif; color:oklch(0.24 0.01 90);">
+
+  <!-- Nav -->
+  <div style="width:100%; border-bottom:1px solid oklch(0.94 0.004 90); position:relative; z-index:2; background:#fff;">
+    <div class="container" style="display:flex; align-items:center; justify-content:space-between; height:76px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; border-radius:10px; background:oklch(0.72 0.15 55); display:flex; align-items:center; justify-content:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(0.22 0.05 155)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l1.6-5.2A2 2 0 0 1 6.5 2.5h11a2 2 0 0 1 1.9 1.3L21 9"></path>
+            <path d="M3 9h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path>
+            <path d="M9 13a3 3 0 0 0 6 0"></path>
+          </svg>
+        </div>
+        <span style="font-family:'Kanit',sans-serif; font-weight:600; font-size:18px;">ร้านชำ<span style="color:oklch(0.72 0.15 55);">ครบวงจร</span></span>
+      </div>
+      <div class="nav-links" style="display:flex; align-items:center; gap:32px;">
+        <a class="nav-link" href="#features" style="font-size:14px; color:oklch(0.35 0.01 90);">ฟีเจอร์</a>
+        <a class="nav-link" href="#pricing" style="font-size:14px; color:oklch(0.35 0.01 90);">แพ็กเกจราคา</a>
+        <a class="nav-link" href="#signup" style="font-size:14px; color:oklch(0.35 0.01 90);">ติดต่อเรา</a>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <a href="#" style="font-size:14px; font-weight:600; color:oklch(0.35 0.01 90);">เข้าสู่ระบบ</a>
+        <a href="#signup" class="btn-cta" style="background:oklch(0.72 0.15 55); color:oklch(0.2 0.05 155); font-weight:700; font-size:13.5px; padding:11px 20px; border-radius:9px;">สมัครใช้งานฟรี</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div style="width:100%; background:linear-gradient(180deg, oklch(0.96 0.025 152) 0%, #ffffff 100%); position:relative; overflow:hidden;">
+    <div class="container hero-grid" style="display:grid; grid-template-columns:1.05fr 0.95fr; align-items:center; gap:40px; padding:88px 32px 90px 32px;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:8px; background:oklch(0.94 0.03 152); border-radius:20px; padding:6px 14px; margin-bottom:20px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:oklch(0.5 0.1 152);"></span>
+          <span style="font-size:12.5px; font-weight:600; color:oklch(0.4 0.09 152);">สำหรับร้านชำและร้านค้าปลีกทุกขนาด</span>
+        </div>
+        <h1 style="font-family:'Kanit',sans-serif; font-weight:700; font-size:44px; line-height:1.25; margin:0 0 20px 0; color:oklch(0.2 0.01 90);">จัดการร้านชำ<br>ให้ง่ายขึ้น <span style="color:oklch(0.42 0.09 152);">ในระบบเดียว</span></h1>
+        <p style="font-size:16px; line-height:1.7; color:oklch(0.45 0.01 90); margin:0 0 32px 0; max-width:480px;">คุมสต๊อกสินค้า เทียบราคาซัพพลายเออร์ บันทึกรายรับรายวัน เก็บบิลซื้อ และออกรายงานสรุป ครบในที่เดียว ใช้งานง่าย เหมาะกับร้านชำไทยโดยเฉพาะ</p>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <a href="#signup" class="btn-cta" style="background:oklch(0.72 0.15 55); color:oklch(0.2 0.05 155); font-weight:700; font-size:14.5px; padding:14px 26px; border-radius:10px;">เริ่มใช้งานฟรี 14 วัน</a>
+          <a href="#features" class="btn-outline" style="border:1.5px solid oklch(0.85 0.005 90); font-weight:600; font-size:14.5px; padding:13px 24px; border-radius:10px; color:oklch(0.3 0.01 90);">ดูฟีเจอร์ทั้งหมด</a>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:22px;">
+          <span style="font-size:12.5px; color:oklch(0.5 0.01 90);">ไม่ต้องผูกบัตรเครดิต · ยกเลิกได้ทุกเมื่อ</span>
+        </div>
+      </div>
+
+      <div style="position:relative;">
+        <div style="background:#fff; border:1px solid oklch(0.92 0.005 90); border-radius:18px; box-shadow:0 24px 50px rgba(20,50,30,0.12); padding:24px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+            <span style="font-family:'Kanit',sans-serif; font-weight:600; font-size:14px; color:oklch(0.24 0.01 90);">ยอดขายวันนี้</span>
+            <span style="font-size:11px; font-weight:600; color:oklch(0.42 0.09 152); background:oklch(0.94 0.03 152); border-radius:6px; padding:3px 8px;">+12.4%</span>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-size:30px; font-weight:700; color:oklch(0.2 0.01 90); margin-bottom:18px;">฿ 8,420</div>
+          <div style="display:flex; align-items:flex-end; gap:10px; height:90px; margin-bottom:20px;">
+            <div style="width:100%; height:40%; background:oklch(0.92 0.03 152); border-radius:5px 5px 2px 2px;"></div>
+            <div style="width:100%; height:65%; background:oklch(0.92 0.03 152); border-radius:5px 5px 2px 2px;"></div>
+            <div style="width:100%; height:52%; background:oklch(0.92 0.03 152); border-radius:5px 5px 2px 2px;"></div>
+            <div style="width:100%; height:80%; background:oklch(0.5 0.1 152); border-radius:5px 5px 2px 2px;"></div>
+            <div style="width:100%; height:95%; background:oklch(0.62 0.16 50); border-radius:5px 5px 2px 2px;"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div style="flex:1; background:oklch(0.97 0.005 90); border-radius:10px; padding:12px;">
+              <div style="font-size:11px; color:oklch(0.5 0.01 90);">สินค้าใกล้หมด</div>
+              <div style="font-size:16px; font-weight:700; color:oklch(0.6 0.17 45); margin-top:4px;">7 รายการ</div>
+            </div>
+            <div style="flex:1; background:oklch(0.97 0.005 90); border-radius:10px; padding:12px;">
+              <div style="font-size:11px; color:oklch(0.5 0.01 90);">บิลค้างชำระ</div>
+              <div style="font-size:16px; font-weight:700; color:oklch(0.58 0.19 25); margin-top:4px;">฿12,300</div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute; width:110px; height:110px; border-radius:50%; background:oklch(0.85 0.08 55 / 0.35); filter:blur(30px); top:-30px; right:-20px; z-index:-1;"></div>
+        <div style="position:absolute; width:140px; height:140px; border-radius:50%; background:oklch(0.85 0.07 152 / 0.4); filter:blur(34px); bottom:-40px; left:-30px; z-index:-1;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trust stats -->
+  <div style="width:100%; background:oklch(0.26 0.045 155); padding:44px 0;">
+    <div class="container stats-grid" style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:24px; text-align:center;">
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-size:28px; font-weight:700; color:#fff;">500+</div>
+        <div style="font-size:12.5px; color:oklch(0.75 0.02 150); margin-top:4px;">ร้านค้าที่ใช้งานจริง</div>
+      </div>
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-size:28px; font-weight:700; color:#fff;">฿120 ล้าน+</div>
+        <div style="font-size:12.5px; color:oklch(0.75 0.02 150); margin-top:4px;">ยอดขายที่บันทึกผ่านระบบ</div>
+      </div>
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-size:28px; font-weight:700; color:#fff;">2 ล้าน+</div>
+        <div style="font-size:12.5px; color:oklch(0.75 0.02 150); margin-top:4px;">รายการบิลที่จัดการ</div>
+      </div>
+      <div>
+        <div style="font-family:'Kanit',sans-serif; font-size:28px; font-weight:700; color:#fff;">4.8/5</div>
+        <div style="font-size:12.5px; color:oklch(0.75 0.02 150); margin-top:4px;">คะแนนความพึงพอใจ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div id="features" style="width:100%; padding:90px 0 80px 0;">
+    <div class="container">
+      <div style="text-align:center; max-width:560px; margin:0 auto 48px auto;">
+        <div style="font-size:13px; font-weight:700; color:oklch(0.55 0.16 50); letter-spacing:.04em; margin-bottom:10px;">ฟีเจอร์หลัก</div>
+        <h2 style="font-family:'Kanit',sans-serif; font-weight:700; font-size:30px; margin:0 0 12px 0; color:oklch(0.2 0.01 90);">ทุกอย่างที่ร้านชำต้องใช้ ในที่เดียว</h2>
+        <p style="font-size:14.5px; color:oklch(0.5 0.01 90); line-height:1.6; margin:0;">ออกแบบมาสำหรับร้านชำไทยโดยเฉพาะ ใช้งานง่าย ไม่ต้องมีความรู้ด้านบัญชี</p>
+      </div>
+
+      <div class="feature-grid" style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:20px;">
+
+        <div class="feature-card" style="border:1px solid oklch(0.92 0.005 90); border-radius:16px; padding:26px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; margin-bottom:8px;">จัดการสต๊อกสินค้า</div>
+          <div style="font-size:13.5px; color:oklch(0.5 0.01 90); line-height:1.65;">บันทึกสินค้าคงคลัง แจ้งเตือนสินค้าใกล้หมด และอัปเดตยอดคงเหลือแบบเรียลไทม์</div>
+        </div>
+
+        <div class="feature-card" style="border:1px solid oklch(0.92 0.005 90); border-radius:16px; padding:26px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:oklch(0.95 0.04 55); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.16 50)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v11a2 2 0 0 0 2 2h11"></path><path d="M7 8l-4 4 4 4"></path><path d="M17 21V10a2 2 0 0 0-2-2H4"></path><path d="M17 16l4-4-4-4"></path></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; margin-bottom:8px;">เทียบราคาซัพพลายเออร์</div>
+          <div style="font-size:13.5px; color:oklch(0.5 0.01 90); line-height:1.65;">เปรียบเทียบราคาสินค้าจากร้านส่งหลายเจ้า หาต้นทุนที่ถูกที่สุดได้ในคลิกเดียว</div>
+        </div>
+
+        <div class="feature-card" style="border:1px solid oklch(0.92 0.005 90); border-radius:16px; padding:26px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2"></rect><path d="M2.5 10h19"></path><circle cx="16.5" cy="14.5" r="1.5"></circle></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; margin-bottom:8px;">รายรับรายวัน</div>
+          <div style="font-size:13.5px; color:oklch(0.5 0.01 90); line-height:1.65;">บันทึกยอดขายและช่องทางการชำระเงิน สรุปกำไรขาดทุนได้ทันทีทุกวัน</div>
+        </div>
+
+        <div class="feature-card" style="border:1px solid oklch(0.92 0.005 90); border-radius:16px; padding:26px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:oklch(0.95 0.04 55); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.16 50)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v18l-3-2-3 2-3-2-3 2V2z"></path><path d="M9 8h6"></path><path d="M9 12h6"></path></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; margin-bottom:8px;">เก็บบิลซื้อสินค้า</div>
+          <div style="font-size:13.5px; color:oklch(0.5 0.01 90); line-height:1.65;">บันทึกบิลซื้อจากซัพพลายเออร์ ติดตามสถานะการชำระเงินไม่ให้ตกหล่น</div>
+        </div>
+
+        <div class="feature-card" style="border:1px solid oklch(0.92 0.005 90); border-radius:16px; padding:26px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:oklch(0.94 0.03 152); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.42 0.09 152)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9"></path><path d="M10 21V3"></path><path d="M17 21v-7"></path><path d="M3 21h18"></path></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; margin-bottom:8px;">รายงานสรุปซื้อขาย</div>
+          <div style="font-size:13.5px; color:oklch(0.5 0.01 90); line-height:1.65;">ดูสรุปยอดขาย ต้นทุน และกำไร แบบรายวัน รายเดือน และรายไตรมาส</div>
+        </div>
+
+        <div class="feature-card" style="border:1px solid oklch(0.92 0.005 90); border-radius:16px; padding:26px;">
+          <div style="width:44px; height:44px; border-radius:12px; background:oklch(0.95 0.04 55); display:flex; align-items:center; justify-content:center; margin-bottom:16px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="oklch(0.55 0.16 50)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; margin-bottom:8px;">รองรับหลายร้านค้า</div>
+          <div style="font-size:13.5px; color:oklch(0.5 0.01 90); line-height:1.65;">ระบบสมาชิกแบบ SaaS ให้ร้านชำอื่นๆ สมัครและใช้งานระบบของตัวเองได้ทันที</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <div id="pricing" style="width:100%; background:oklch(0.98 0.006 90); padding:90px 0;">
+    <div class="container">
+      <div style="text-align:center; max-width:560px; margin:0 auto 36px auto;">
+        <div style="font-size:13px; font-weight:700; color:oklch(0.55 0.16 50); letter-spacing:.04em; margin-bottom:10px;">แพ็กเกจราคา</div>
+        <h2 style="font-family:'Kanit',sans-serif; font-weight:700; font-size:30px; margin:0 0 12px 0; color:oklch(0.2 0.01 90);">เลือกแพ็กเกจที่เหมาะกับร้านคุณ</h2>
+        <p style="font-size:14.5px; color:oklch(0.5 0.01 90); line-height:1.6; margin:0 0 24px 0;">ทดลองใช้ฟรี 14 วันทุกแพ็กเกจ ไม่มีค่าใช้จ่ายผูกมัด</p>
+        <div style="display:inline-flex; align-items:center; gap:12px; background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:11px; padding:5px;">
+          <div class="toggle" onClick="{{selectMonthly}}" style="padding:9px 18px; border-radius:8px; font-size:13px; font-weight:{{monthlyWeight}}; background:{{monthlyBg}}; color:{{monthlyColor}};">รายเดือน</div>
+          <div class="toggle" onClick="{{selectYearly}}" style="display:flex; align-items:center; gap:6px; padding:9px 18px; border-radius:8px; font-size:13px; font-weight:{{yearlyWeight}}; background:{{yearlyBg}}; color:{{yearlyColor}};">รายปี <span style="font-size:10.5px; font-weight:700; color:oklch(0.55 0.16 50); background:oklch(0.95 0.04 55); border-radius:5px; padding:2px 6px;">ประหยัด 17%</span></div>
+        </div>
+      </div>
+
+      <div class="pricing-grid" style="display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:20px; align-items:stretch;">
+
+        <div class="pricing-card" style="background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:16px; padding:28px; display:flex; flex-direction:column;">
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:17px; margin-bottom:6px;">เริ่มต้น</div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:18px;">ร้านค้าขนาดเล็ก 1 สาขา</div>
+          <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:4px;">
+            <span style="font-family:'Kanit',sans-serif; font-size:32px; font-weight:700;">฿{{starterPrice}}</span>
+            <span style="font-size:13px; color:oklch(0.5 0.01 90);">/เดือน</span>
+          </div>
+          <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-bottom:22px; min-height:16px;">{{starterSub}}</div>
+          <a href="#signup" class="btn-outline" style="text-align:center; border:1.5px solid oklch(0.85 0.005 90); font-weight:600; font-size:13.5px; padding:12px; border-radius:9px; color:oklch(0.3 0.01 90); margin-bottom:22px;">เริ่มทดลองใช้</a>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> จัดการสต๊อกสินค้าไม่จำกัด</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> บันทึกรายรับรายวัน</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> รายงานสรุปรายวัน/เดือน</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> ผู้ใช้งาน 1 คน</div>
+          </div>
+        </div>
+
+        <div class="pricing-card" style="background:oklch(0.26 0.045 155); border:2px solid oklch(0.72 0.15 55); border-radius:16px; padding:28px; display:flex; flex-direction:column; position:relative;">
+          <div style="position:absolute; top:-13px; left:28px; background:oklch(0.72 0.15 55); color:oklch(0.2 0.05 155); font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px;">แนะนำมากที่สุด</div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:17px; margin-bottom:6px; color:#fff;">มาตรฐาน</div>
+          <div style="font-size:12.5px; color:oklch(0.75 0.02 150); margin-bottom:18px;">ร้านชำที่กำลังเติบโต</div>
+          <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:4px;">
+            <span style="font-family:'Kanit',sans-serif; font-size:32px; font-weight:700; color:#fff;">฿{{standardPrice}}</span>
+            <span style="font-size:13px; color:oklch(0.75 0.02 150);">/เดือน</span>
+          </div>
+          <div style="font-size:11.5px; color:oklch(0.72 0.15 55); margin-bottom:22px; min-height:16px;">{{standardSub}}</div>
+          <a href="#signup" class="btn-cta" style="text-align:center; background:oklch(0.72 0.15 55); color:oklch(0.2 0.05 155); font-weight:700; font-size:13.5px; padding:12px; border-radius:9px; margin-bottom:22px;">เริ่มทดลองใช้</a>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.92 0.01 150);"><span style="color:oklch(0.72 0.15 55);">✓</span> ทุกอย่างในแพ็กเกจเริ่มต้น</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.92 0.01 150);"><span style="color:oklch(0.72 0.15 55);">✓</span> เทียบราคาซัพพลายเออร์</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.92 0.01 150);"><span style="color:oklch(0.72 0.15 55);">✓</span> รายงานสรุปรายไตรมาส</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.92 0.01 150);"><span style="color:oklch(0.72 0.15 55);">✓</span> ผู้ใช้งานสูงสุด 3 คน</div>
+          </div>
+        </div>
+
+        <div class="pricing-card" style="background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:16px; padding:28px; display:flex; flex-direction:column;">
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:17px; margin-bottom:6px;">โปร</div>
+          <div style="font-size:12.5px; color:oklch(0.5 0.01 90); margin-bottom:18px;">เชนร้านค้าหลายสาขา</div>
+          <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:4px;">
+            <span style="font-family:'Kanit',sans-serif; font-size:32px; font-weight:700;">฿{{premiumPrice}}</span>
+            <span style="font-size:13px; color:oklch(0.5 0.01 90);">/เดือน</span>
+          </div>
+          <div style="font-size:11.5px; color:oklch(0.55 0.01 90); margin-bottom:22px; min-height:16px;">{{premiumSub}}</div>
+          <a href="#signup" class="btn-outline" style="text-align:center; border:1.5px solid oklch(0.85 0.005 90); font-weight:600; font-size:13.5px; padding:12px; border-radius:9px; color:oklch(0.3 0.01 90); margin-bottom:22px;">ติดต่อฝ่ายขาย</a>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> ทุกอย่างในแพ็กเกจมาตรฐาน</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> จัดการได้หลายสาขา</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> ผู้ใช้งานไม่จำกัด</div>
+            <div style="display:flex; gap:8px; font-size:13px; color:oklch(0.4 0.01 90);"><span style="color:oklch(0.5 0.1 152);">✓</span> ทีมช่วยเหลือด่วนเป็นพิเศษ</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Signup -->
+  <div id="signup" style="width:100%; padding:90px 0;">
+    <div class="container" style="max-width:520px;">
+      <sc-if value="{{submitted}}" hint-placeholder-val="{{false}}">
+        <div style="text-align:center; border:1px solid oklch(0.85 0.05 152); background:oklch(0.97 0.02 152); border-radius:18px; padding:48px 32px;">
+          <div style="width:56px; height:56px; border-radius:50%; background:oklch(0.5 0.1 152); display:flex; align-items:center; justify-content:center; margin:0 auto 20px auto;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+          </div>
+          <div style="font-family:'Kanit',sans-serif; font-weight:600; font-size:20px; margin-bottom:10px;">สมัครสำเร็จแล้ว!</div>
+          <div style="font-size:14px; color:oklch(0.4 0.01 90); line-height:1.7; margin-bottom:20px;">ยินดีต้อนรับร้าน "{{submittedName}}" สู่ระบบร้านชำครบวงจร ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมงเพื่อช่วยตั้งค่าระบบให้พร้อมใช้งาน</div>
+          <span class="reset-link" onClick="{{resetForm}}" style="font-size:13.5px; font-weight:600; color:oklch(0.42 0.09 152);">กลับไปหน้าฟอร์มสมัคร</span>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showForm}}" hint-placeholder-val="{{true}}">
+        <div style="text-align:center; margin-bottom:32px;">
+          <h2 style="font-family:'Kanit',sans-serif; font-weight:700; font-size:28px; margin:0 0 10px 0; color:oklch(0.2 0.01 90);">สมัครใช้งานฟรี 14 วัน</h2>
+          <p style="font-size:14px; color:oklch(0.5 0.01 90); margin:0;">กรอกข้อมูลร้านของคุณ เริ่มใช้งานได้ทันทีภายในไม่กี่นาที</p>
+        </div>
+        <div style="background:#fff; border:1px solid oklch(0.9 0.005 90); border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:16px;">
+          <sc-if value="{{hasError}}" hint-placeholder-val="{{false}}">
+            <div style="background:oklch(0.95 0.03 20); color:oklch(0.5 0.17 25); font-size:12.5px; padding:11px 14px; border-radius:9px;">กรุณากรอกชื่อร้านและเบอร์โทรศัพท์ให้ครบถ้วน</div>
+          </sc-if>
+          <div class="field">
+            <label>ชื่อร้านค้า</label>
+            <input type="text" placeholder="เช่น ร้านสมชายพาณิชย์" value="{{form.storeName}}" onChange="{{setStoreName}}" />
+          </div>
+          <div class="field">
+            <label>ชื่อเจ้าของร้าน</label>
+            <input type="text" placeholder="ชื่อ-นามสกุล" value="{{form.ownerName}}" onChange="{{setOwnerName}}" />
+          </div>
+          <div class="field">
+            <label>เบอร์โทรศัพท์</label>
+            <input type="text" placeholder="08X-XXX-XXXX" value="{{form.phone}}" onChange="{{setPhone}}" />
+          </div>
+          <div class="field">
+            <label>ตั้งรหัสผ่าน</label>
+            <input type="password" placeholder="อย่างน้อย 8 ตัวอักษร" value="{{form.password}}" onChange="{{setPassword}}" />
+          </div>
+          <div class="btn-cta" onClick="{{submitForm}}" style="text-align:center; background:oklch(0.72 0.15 55); color:oklch(0.2 0.05 155); font-weight:700; font-size:14.5px; padding:13px; border-radius:10px; cursor:pointer; margin-top:6px;">สมัครใช้งานฟรี 14 วัน</div>
+          <div style="text-align:center; font-size:12px; color:oklch(0.55 0.01 90);">การสมัครถือว่ายอมรับ <a href="#">ข้อกำหนดการใช้งาน</a> ของเรา</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="width:100%; background:oklch(0.26 0.045 155); padding:48px 0 28px 0;">
+    <div class="container" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:24px; padding-bottom:28px; border-bottom:1px solid rgba(255,255,255,0.1);">
+      <div style="max-width:280px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+          <div style="width:32px; height:32px; border-radius:9px; background:oklch(0.72 0.15 55); display:flex; align-items:center; justify-content:center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(0.22 0.05 155)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.6-5.2A2 2 0 0 1 6.5 2.5h11a2 2 0 0 1 1.9 1.3L21 9"></path><path d="M3 9h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path><path d="M9 13a3 3 0 0 0 6 0"></path></svg>
+          </div>
+          <span style="font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; color:#fff;">ร้านชำครบวงจร</span>
+        </div>
+        <p style="font-size:13px; color:oklch(0.72 0.02 150); line-height:1.7; margin:0;">ระบบจัดการร้านชำสำหรับร้านค้าไทย ครบทุกฟังก์ชันที่ร้านต้องใช้</p>
+      </div>
+      <div style="display:flex; gap:56px; flex-wrap:wrap;">
+        <div>
+          <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:14px;">ผลิตภัณฑ์</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <a href="#features" style="font-size:13px; color:oklch(0.72 0.02 150);">ฟีเจอร์</a>
+            <a href="#pricing" style="font-size:13px; color:oklch(0.72 0.02 150);">แพ็กเกจราคา</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px; font-weight:600; color:#fff; margin-bottom:14px;">ติดต่อเรา</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <span style="font-size:13px; color:oklch(0.72 0.02 150);">line: @groceryapp</span>
+            <span style="font-size:13px; color:oklch(0.72 0.02 150);">02-123-4567</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container" style="padding-top:20px;">
+      <span style="font-size:12px; color:oklch(0.6 0.02 150);">© 2569 ร้านชำครบวงจร สงวนลิขสิทธิ์</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      billing: 'monthly',
+      submitted: false,
+      error: false,
+      submittedName: '',
+      form: { storeName: '', ownerName: '', phone: '', password: '' }
+    };
+  }
+  renderVals() {
+    const st = this.state;
+    const PRICES = {
+      monthly: { starter: 299, standard: 599, premium: 1290 },
+      yearly: { starter: 249, standard: 499, premium: 1075 }
+    };
+    const p = PRICES[st.billing];
+    const yearlySub = (annual) => 'เรียกเก็บ ฿' + annual.toLocaleString('en-US') + '/ปี';
+
+    const updateField = (field) => (e) => {
+      this.setState({ form: { ...this.state.form, [field]: e.target.value } });
+    };
+
+    return {
+      monthlyBg: st.billing === 'monthly' ? '#ffffff' : 'transparent',
+      monthlyColor: st.billing === 'monthly' ? 'oklch(0.42 0.09 152)' : 'oklch(0.5 0.01 90)',
+      monthlyWeight: st.billing === 'monthly' ? '700' : '400',
+      yearlyBg: st.billing === 'yearly' ? '#ffffff' : 'transparent',
+      yearlyColor: st.billing === 'yearly' ? 'oklch(0.42 0.09 152)' : 'oklch(0.5 0.01 90)',
+      yearlyWeight: st.billing === 'yearly' ? '700' : '400',
+      selectMonthly: () => this.setState({ billing: 'monthly' }),
+      selectYearly: () => this.setState({ billing: 'yearly' }),
+
+      starterPrice: p.starter,
+      standardPrice: p.standard,
+      premiumPrice: p.premium,
+      starterSub: st.billing === 'yearly' ? yearlySub(p.starter * 12) : 'ทดลองฟรี 14 วัน',
+      standardSub: st.billing === 'yearly' ? yearlySub(p.standard * 12) : 'ทดลองฟรี 14 วัน',
+      premiumSub: st.billing === 'yearly' ? yearlySub(p.premium * 12) : 'ทดลองฟรี 14 วัน',
+
+      submitted: st.submitted,
+      showForm: !st.submitted,
+      submittedName: st.submittedName,
+      hasError: st.error,
+      form: st.form,
+      setStoreName: updateField('storeName'),
+      setOwnerName: updateField('ownerName'),
+      setPhone: updateField('phone'),
+      setPassword: updateField('password'),
+      submitForm: () => {
+        const f = this.state.form;
+        if (!f.storeName.trim() || !f.phone.trim()) {
+          this.setState({ error: true });
+          return;
+        }
+        this.setState({ submitted: true, error: false, submittedName: f.storeName.trim() });
+      },
+      resetForm: () => this.setState({
+        submitted: false, error: false, submittedName: '',
+        form: { storeName: '', ownerName: '', phone: '', password: '' }
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

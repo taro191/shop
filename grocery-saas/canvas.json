@@ -1,0 +1,28 @@
+{
+  "artboards": [
+    { "file": "Landing.dc.html", "x": 0, "y": 0, "w": 1440, "h": 900, "title": "หน้า Landing / สมัครสมาชิก", "expand": "fill" },
+
+    { "file": "Main.dc.html", "x": 0, "y": 980, "w": 1440, "h": 960, "title": "แดชบอร์ด (เดสก์ทอป)" },
+    { "file": "Inventory.dc.html", "x": 1540, "y": 980, "w": 1440, "h": 960, "title": "คลังสินค้า (เดสก์ทอป)" },
+    { "file": "SupplierCompare.dc.html", "x": 3080, "y": 980, "w": 1440, "h": 960, "title": "เทียบราคาซัพพลายเออร์ (เดสก์ทอป)" },
+
+    { "file": "DailyIncome.dc.html", "x": 0, "y": 2020, "w": 1440, "h": 960, "title": "รายรับรายวัน (เดสก์ทอป)" },
+    { "file": "PurchaseBills.dc.html", "x": 1540, "y": 2020, "w": 1440, "h": 960, "title": "บิลซื้อสินค้า (เดสก์ทอป)" },
+    { "file": "Reports.dc.html", "x": 3080, "y": 2020, "w": 1440, "h": 960, "title": "รายงานสรุป (เดสก์ทอป)" },
+
+    { "file": "Sidebar.dc.html", "x": 0, "y": 3060, "w": 240, "h": 960, "title": "Sidebar (component)" },
+    { "file": "BottomNav.dc.html", "x": 280, "y": 3060, "w": 390, "h": 844, "title": "BottomNav (component)" },
+
+    { "file": "SearchPrice.dc.html", "x": 0, "y": 4080, "w": 390, "h": 844, "title": "ค้นหาราคาสินค้า (มือถือ)" },
+    { "file": "IncomeMobile.dc.html", "x": 430, "y": 4080, "w": 390, "h": 844, "title": "รายรับรายวัน (มือถือ)" },
+    { "file": "BillsMobile.dc.html", "x": 860, "y": 4080, "w": 390, "h": 844, "title": "บิลซื้อสินค้า (มือถือ)" },
+    { "file": "MoreMobile.dc.html", "x": 1290, "y": 4080, "w": 390, "h": 844, "title": "เมนู (มือถือ)" }
+  ],
+  "annotations": [
+    { "id": "note-landing", "x": 0, "y": -60, "w": 420, "text": "หน้า Landing — สมัครสมาชิกร้านค้าใหม่ (ระบบ SaaS)" },
+    { "id": "note-app", "x": 0, "y": 920, "w": 640, "text": "หน้าจอเดสก์ทอปสำหรับเจ้าของร้าน — แดชบอร์ด · คลังสินค้า · เทียบราคาซัพพลายเออร์" },
+    { "id": "note-ops", "x": 0, "y": 1960, "w": 640, "text": "รายรับรายวัน · บิลซื้อสินค้า · รายงานสรุปซื้อขาย (เดสก์ทอป)" },
+    { "id": "note-mobile", "x": 0, "y": 4020, "w": 780, "text": "แอปมือถือสำหรับงานประจำวัน — ค้นหาราคาสินค้าด้วยการพิมพ์หรือสแกนบาร์โค้ด · บันทึกรายรับ · เพิ่มบิลซื้อ" }
+  ],
+  "launch": { "view": "focused", "file": "SearchPrice.dc.html" }
+}
