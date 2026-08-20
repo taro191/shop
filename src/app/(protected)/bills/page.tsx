@@ -3,14 +3,15 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FilterChips } from "@/components/ui/FilterChips";
 import { SearchBox } from "@/components/ui/SearchBox";
-import { SlideOver, Field, SelectField } from "@/components/ui/SlideOver";
-import { addBillAction } from "./actions";
+import { AddBillPanel } from "@/components/bills/AddBillPanel";
+import { BillRowActions } from "@/components/bills/BillRowActions";
 import { billStatusMeta } from "@/lib/status";
 import { formatBaht, formatThaiDate } from "@/lib/format";
 import { ChevronRightIcon } from "@/components/icons";
 
 const STATUS_OPTIONS = [
   { key: "ทั้งหมด", value: undefined },
+  { key: "สั่งซื้อแล้ว", value: "ORDERED" },
   { key: "รอชำระ", value: "PENDING" },
   { key: "ชำระแล้ว", value: "PAID" },
   { key: "เกินกำหนด", value: "OVERDUE" },
@@ -25,7 +26,7 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
   const statusLabel = typeof params.status === "string" ? params.status : "ทั้งหมด";
   const statusValue = STATUS_OPTIONS.find((s) => s.key === statusLabel)?.value;
 
-  const [bills, suppliers, pending] = await Promise.all([
+  const [bills, suppliers, products, pending] = await Promise.all([
     prisma.purchaseBill.findMany({
       where: {
         storeId: user.storeId,
@@ -43,6 +44,11 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
       orderBy: { billDate: "desc" },
     }),
     prisma.supplier.findMany({ where: { storeId: user.storeId }, orderBy: { name: "asc" } }),
+    prisma.product.findMany({
+      where: { storeId: user.storeId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, unit: true, costPrice: true },
+    }),
     prisma.purchaseBill.findMany({ where: { storeId: user.storeId, status: { in: ["PENDING", "OVERDUE"] } } }),
   ]);
 
@@ -53,25 +59,7 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
       <PageHeader
         title="บิลซื้อสินค้า"
         subtitle={`รวมค้างชำระ ฿${formatBaht(pendingTotal)} จาก ${pending.length} บิล`}
-        action={
-          <SlideOver triggerLabel="เพิ่มบิลใหม่" title="เพิ่มบิลซื้อสินค้า" action={addBillAction}>
-            <Field label="เลขที่บิล" name="billNo" placeholder="เช่น INV-1042" required />
-            <SelectField
-              label="ซัพพลายเออร์"
-              name="supplierId"
-              options={suppliers.map((s) => ({ value: s.id, label: s.name }))}
-            />
-            <Field label="ยอดเงินรวม (บาท)" name="amount" type="number" placeholder="0" required />
-            <SelectField
-              label="สถานะ"
-              name="status"
-              options={[
-                { value: "PENDING", label: "รอชำระ" },
-                { value: "PAID", label: "ชำระแล้ว" },
-              ]}
-            />
-          </SlideOver>
-        }
+        action={<AddBillPanel products={products} suppliers={suppliers} />}
       />
 
       <div className="flex flex-col gap-3 px-5 pt-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
@@ -99,7 +87,7 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
             return (
               <details key={bill.id} className="group border-t border-border first:border-none">
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-6 py-3.5 [&::-webkit-details-marker]:hidden">
-                  <div className="grid flex-grow grid-cols-2 items-center gap-2 sm:grid-cols-[140px_1.4fr_120px_1fr_120px]">
+                  <div className="grid flex-grow grid-cols-2 items-center gap-2 sm:grid-cols-[130px_1.2fr_110px_1fr_150px]">
                     <span className="text-[13px] font-semibold text-foreground">{bill.billNo}</span>
                     <span className="text-[13px] text-foreground/80">{bill.supplier.name}</span>
                     <span className="hidden text-[12.5px] text-muted sm:inline">{formatThaiDate(bill.billDate)}</span>
@@ -110,6 +98,7 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
                       {status.text}
                     </span>
                   </div>
+                  <BillRowActions billId={bill.id} status={bill.status} />
                   <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted transition-transform group-open:rotate-90" />
                 </summary>
                 <div className="bg-background px-6 pb-4">

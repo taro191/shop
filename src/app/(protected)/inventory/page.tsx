@@ -5,9 +5,10 @@ import { FilterChips } from "@/components/ui/FilterChips";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { SlideOver, Field, SelectField } from "@/components/ui/SlideOver";
 import { addProductAction } from "./actions";
-import { productStockStatus } from "@/lib/status";
+import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS } from "@/lib/constants";
+import Link from "next/link";
 
 export default async function InventoryPage({
   searchParams,
@@ -36,19 +37,28 @@ export default async function InventoryPage({
         title="คลังสินค้า"
         subtitle={`ทั้งหมด ${products.length} รายการ · ใกล้หมด/หมด ${lowCount} รายการ`}
         action={
-          <SlideOver triggerLabel="เพิ่มสินค้าใหม่" title="เพิ่มสินค้าใหม่" action={addProductAction}>
-            <Field label="ชื่อสินค้า" name="name" placeholder="เช่น น้ำปลาตราปลาหมึก 700ml" required />
-            <SelectField label="หมวดหมู่" name="category" options={PRODUCT_CATEGORIES} />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="ราคาทุน (บาท)" name="costPrice" type="number" placeholder="0" required />
-              <Field label="ราคาขาย (บาท)" name="sellPrice" type="number" placeholder="0" required />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="จำนวนคงเหลือ" name="quantity" type="number" placeholder="0" required />
-              <SelectField label="หน่วยนับ" name="unit" options={PRODUCT_UNITS} />
-            </div>
-            <Field label="บาร์โค้ด (ถ้ามี)" name="barcode" placeholder="สแกนหรือพิมพ์เลขบาร์โค้ด" />
-          </SlideOver>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link href="/labels" className="rounded-[10px] border border-border px-4 py-2.5 text-[13px] font-semibold text-foreground/70">
+              พิมพ์ป้ายราคา
+            </Link>
+            <Link href="/stock-take" className="rounded-[10px] border border-border px-4 py-2.5 text-[13px] font-semibold text-foreground/70">
+              ตรวจนับสต๊อก
+            </Link>
+            <SlideOver triggerLabel="เพิ่มสินค้าใหม่" title="เพิ่มสินค้าใหม่" action={addProductAction}>
+              <Field label="ชื่อสินค้า" name="name" placeholder="เช่น น้ำปลาตราปลาหมึก 700ml" required />
+              <SelectField label="หมวดหมู่" name="category" options={PRODUCT_CATEGORIES} />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="ราคาทุน (บาท)" name="costPrice" type="number" placeholder="0" required />
+                <Field label="ราคาขาย (บาท)" name="sellPrice" type="number" placeholder="0" required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="จำนวนคงเหลือ" name="quantity" type="number" placeholder="0" required />
+                <SelectField label="หน่วยนับ" name="unit" options={PRODUCT_UNITS} />
+              </div>
+              <Field label="บาร์โค้ด (ถ้ามี)" name="barcode" placeholder="สแกนหรือพิมพ์เลขบาร์โค้ด" />
+              <Field label="วันหมดอายุ (ถ้ามี)" name="expiresAt" type="date" />
+            </SlideOver>
+          </div>
         }
       />
 
@@ -72,6 +82,7 @@ export default async function InventoryPage({
         ) : (
           products.map((p) => {
             const status = productStockStatus(p.quantity);
+            const expiry = expiryStatus(p.expiresAt);
             return (
               <div
                 key={p.id}
@@ -84,7 +95,10 @@ export default async function InventoryPage({
                 </span>
                 <span className="text-[13px] text-muted">฿{formatBaht(p.costPrice)}</span>
                 <span className="text-[13px] font-semibold text-foreground">฿{formatBaht(p.sellPrice)}</span>
-                <span className={`w-fit rounded-md px-2.5 py-1 text-[11.5px] font-semibold ${status.className}`}>{status.text}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  <span className={`w-fit rounded-md px-2.5 py-1 text-[11.5px] font-semibold ${status.className}`}>{status.text}</span>
+                  {expiry && <span className={`w-fit rounded-md px-2.5 py-1 text-[11.5px] font-semibold ${expiry.className}`}>{expiry.text}</span>}
+                </div>
               </div>
             );
           })

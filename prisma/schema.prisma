@@ -22,9 +22,15 @@ enum PaymentMethod {
 }
 
 enum BillStatus {
-  PENDING
+  ORDERED // purchase order placed, not yet received — stock not affected yet
+  PENDING // received (stock already added), payment owed
   PAID
   OVERDUE
+}
+
+enum LoyaltyEntryType {
+  EARN
+  REDEEM
 }
 
 model Store {
@@ -35,11 +41,13 @@ model Store {
   promptPayId String?
   createdAt   DateTime @default(now())
 
-  users        User[]
-  products     Product[]
-  suppliers    Supplier[]
-  bills        PurchaseBill[]
-  transactions IncomeTransaction[]
+  users            User[]
+  products         Product[]
+  suppliers        Supplier[]
+  bills            PurchaseBill[]
+  transactions     IncomeTransaction[]
+  customers        Customer[]
+  stockAdjustments StockAdjustment[]
 }
 
 model User {
@@ -68,12 +76,15 @@ model Product {
   quantity            Int       @default(0)
   preferredSupplierId String?
   preferredSupplier   Supplier? @relation("PreferredSupplier", fields: [preferredSupplierId], references: [id], onDelete: SetNull)
+  /// Optional best-before/expiry date for the current stock on hand.
+  expiresAt           DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  supplierPrices SupplierPrice[]
-  billLineItems  BillLineItem[]
-  saleLineItems  SaleLineItem[]
+  supplierPrices    SupplierPrice[]
+  billLineItems     BillLineItem[]
+  saleLineItems     SaleLineItem[]
+  stockAdjustments  StockAdjustment[]
 
   @@unique([storeId, barcode])
   @@index([storeId])
@@ -109,17 +120,70 @@ model SupplierPrice {
 }
 
 model IncomeTransaction {
-  id      String        @id @default(cuid())
-  storeId String
-  store   Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  items   String
-  method  PaymentMethod
-  amount  Float
-  soldAt  DateTime      @default(now())
+  id             String        @id @default(cuid())
+  storeId        String
+  store          Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items          String
+  method         PaymentMethod
+  amount         Float
+  customerId     String?
+  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  pointsEarned   Int           @default(0)
+  pointsRedeemed Int           @default(0)
+  discountAmount Float         @default(0)
+  soldAt         DateTime      @default(now())
 
   lineItems SaleLineItem[]
 
   @@index([storeId, soldAt])
+  @@index([customerId])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+
+  transactions   IncomeTransaction[]
+  loyaltyEntries LoyaltyEntry[]
+
+  @@unique([storeId, phone])
+  @@index([storeId])
+}
+
+/** Audit trail for point balance changes — lets a store explain "why does this
+ * customer have 340 points" rather than trusting the running total blindly. */
+model LoyaltyEntry {
+  id         String           @id @default(cuid())
+  customerId String
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type       LoyaltyEntryType
+  points     Int
+  note       String?
+  createdAt  DateTime         @default(now())
+
+  @@index([customerId])
+}
+
+/** A stock-take correction: system count vs. physically counted, with a reason.
+ * Separate from ordinary sale/receiving movements so shrinkage is visible on its own. */
+model StockAdjustment {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  before    Int
+  after     Int
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([storeId, createdAt])
+  @@index([productId])
 }
 
 /** One product line within a checked-out sale. Populated by the POS checkout
@@ -150,6 +214,9 @@ model PurchaseBill {
   amount     Float
   status     BillStatus @default(PENDING)
   billDate   DateTime   @default(now())
+  /// Set when an ORDERED bill's stock has been received (moved to PENDING). Null for
+  /// bills logged directly as already-received (legacy) or still ORDERED.
+  receivedAt DateTime?
   createdAt  DateTime   @default(now())
 
   lineItems BillLineItem[]
@@ -158,13 +225,18 @@ model PurchaseBill {
 }
 
 model BillLineItem {
-  id        String        @id @default(cuid())
+  id        String       @id @default(cuid())
   billId    String
-  bill      PurchaseBill  @relation(fields: [billId], references: [id], onDelete: Cascade)
+  bill      PurchaseBill @relation(fields: [billId], references: [id], onDelete: Cascade)
   productId String?
-  product   Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product   Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
   name      String
   qtyLabel  String
+  /// Numeric quantity + unit, used to increment stock on receiving. Null on legacy
+  /// free-text-only rows (created before this field existed) — those must be
+  /// received manually since qtyLabel alone can't be parsed reliably back to a number.
+  quantity  Int?
+  unit      String?
   unitPrice Float
   subtotal  Float
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { checkoutSale, type CheckoutResult } from "@/app/(protected)/sell/actions";
 import { SellScanner } from "@/components/sell/SellScanner";
 import { PromptPayQR } from "@/components/PromptPayQR";
+import { AddCustomerForm } from "@/components/customers/AddCustomerForm";
 import { buildPromptPayPayload } from "@/lib/promptpay";
 import { CartIcon, PlusIcon, MinusIcon, TrashIcon, CheckCircleIcon } from "@/components/icons";
 import { formatBaht, formatThaiTime, formatThaiDate } from "@/lib/format";
@@ -20,15 +21,18 @@ type ProductRow = {
   barcode: string | null;
 };
 
+type Customer = { id: string; name: string; phone: string; points: number };
 type CartLine = { productId: string; name: string; unit: string; sellPrice: number; stock: number; qty: number };
 type Receipt = Extract<CheckoutResult, { ok: true }>["receipt"];
 
 export function SellCart({
   products,
+  customers,
   storeName,
   promptPayId,
 }: {
   products: ProductRow[];
+  customers: Customer[];
   storeName: string;
   promptPayId: string | null;
 }) {
@@ -42,6 +46,11 @@ export function SellCart({
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [pending, startTransition] = useTransition();
 
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customerQuery, setCustomerQuery] = useState("");
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [redeemInput, setRedeemInput] = useState("");
+
   const byBarcode = useMemo(() => {
     const map = new Map<string, ProductRow>();
     for (const p of products) if (p.barcode) map.set(p.barcode, p);
@@ -54,9 +63,19 @@ export function SellCart({
     return products.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 30);
   }, [products, query]);
 
+  const matchedCustomers = useMemo(() => {
+    const q = customerQuery.trim().toLowerCase();
+    if (!q) return [];
+    return customers.filter((c) => c.name.toLowerCase().includes(q) || c.phone.includes(q)).slice(0, 6);
+  }, [customers, customerQuery]);
+
   const cartLines = useMemo(() => [...cart.values()], [cart]);
   const totalQty = cartLines.reduce((s, l) => s + l.qty, 0);
-  const totalAmount = cartLines.reduce((s, l) => s + l.qty * l.sellPrice, 0);
+  const subtotal = cartLines.reduce((s, l) => s + l.qty * l.sellPrice, 0);
+
+  const discountAmount = customer ? Math.min(Math.max(0, Number(redeemInput) || 0), customer.points, Math.floor(subtotal)) : 0;
+  const totalAmount = subtotal - discountAmount;
+  const pointsToEarn = customer ? Math.floor(totalAmount) : 0;
 
   const qrPayload = useMemo(() => {
     if (!promptPayId || totalAmount <= 0) return null;
@@ -125,11 +144,15 @@ export function SellCart({
       const result = await checkoutSale({
         items: cartLines.map((l) => ({ productId: l.productId, quantity: l.qty })),
         method,
+        customerId: customer?.id,
+        pointsToRedeem: discountAmount,
       });
       if (result.ok) {
         setReceipt(result.receipt);
         setCart(new Map());
         setShowQr(false);
+        setCustomer(null);
+        setRedeemInput("");
       } else {
         setError(result.error);
         setShowQr(false);
@@ -153,6 +176,7 @@ export function SellCart({
           <div className="mb-1 font-display text-lg font-semibold text-foreground">ใบเสร็จรับเงิน</div>
           <div className="mb-5 text-[12.5px] text-muted">
             {formatThaiDate(new Date(receipt.soldAt))} · {formatThaiTime(new Date(receipt.soldAt))} · เลขที่ {receipt.id.slice(-8).toUpperCase()}
+            {receipt.customerName ? ` · ${receipt.customerName}` : ""}
           </div>
 
           <div className="mb-5 flex flex-col gap-2 rounded-xl bg-background p-4 text-left print:rounded-none print:bg-white print:border-t print:border-b print:border-dashed print:border-foreground/40 print:py-3">
@@ -164,11 +188,18 @@ export function SellCart({
                 <span className="font-medium text-foreground">฿{formatBaht(l.subtotal)}</span>
               </div>
             ))}
+            {receipt.discountAmount > 0 && (
+              <div className="flex justify-between text-[13px] text-accent-dark">
+                <span>ส่วนลดแลกแต้ม ({receipt.pointsRedeemed} แต้ม)</span>
+                <span>-฿{formatBaht(receipt.discountAmount)}</span>
+              </div>
+            )}
             <div className="mt-1 flex justify-between border-t border-border pt-2 text-[14px] font-semibold text-foreground">
               <span>รวม</span>
               <span>฿{formatBaht(receipt.amount)}</span>
             </div>
             <div className="text-[11.5px] text-muted">ชำระโดย {receipt.method === "CASH" ? "เงินสด" : "เงินโอน / QR"}</div>
+            {receipt.pointsEarned > 0 && <div className="text-[11.5px] text-brand">ได้รับ {receipt.pointsEarned} แต้มสะสม</div>}
           </div>
 
           <div className="flex gap-2.5 print:hidden">
@@ -302,6 +333,90 @@ export function SellCart({
               </div>
             )}
 
+            {/* Customer / loyalty */}
+            {!showQr && (
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="mb-2 text-[12px] font-semibold text-muted">ลูกค้า (ไม่บังคับ)</div>
+                {customer ? (
+                  <div className="flex items-center justify-between rounded-[10px] bg-brand-light px-3.5 py-2.5">
+                    <div>
+                      <div className="text-[13px] font-semibold text-brand">{customer.name}</div>
+                      <div className="text-[11px] text-brand/80">{customer.points} แต้มสะสม</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomer(null);
+                        setRedeemInput("");
+                      }}
+                      className="text-[11.5px] font-semibold text-brand underline"
+                    >
+                      เอาออก
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      value={customerQuery}
+                      onChange={(e) => setCustomerQuery(e.target.value)}
+                      placeholder="ค้นหาชื่อหรือเบอร์โทรลูกค้า..."
+                      className="w-full rounded-[9px] border border-border px-3 py-2 text-[13px] outline-none focus:border-brand"
+                    />
+                    {matchedCustomers.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        {matchedCustomers.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              setCustomer(c);
+                              setCustomerQuery("");
+                            }}
+                            className="flex items-center justify-between rounded-[8px] border border-border px-3 py-2 text-left text-[12.5px] hover:bg-background"
+                          >
+                            <span>{c.name} · {c.phone}</span>
+                            <span className="text-muted">{c.points} แต้ม</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {customerQuery.trim() && matchedCustomers.length === 0 && !showAddCustomer && (
+                      <button type="button" onClick={() => setShowAddCustomer(true)} className="text-left text-[12.5px] font-semibold text-brand">
+                        + เพิ่มลูกค้าใหม่
+                      </button>
+                    )}
+                    {showAddCustomer && (
+                      <AddCustomerForm
+                        initialPhone={/^\d+$/.test(customerQuery.trim()) ? customerQuery.trim() : ""}
+                        onCreated={(c) => {
+                          setCustomer(c);
+                          setShowAddCustomer(false);
+                          setCustomerQuery("");
+                        }}
+                        onCancel={() => setShowAddCustomer(false)}
+                      />
+                    )}
+                  </div>
+                )}
+
+                {customer && customer.points > 0 && (
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <span className="text-[12px] text-muted">แลกแต้มเป็นส่วนลด</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={Math.min(customer.points, Math.floor(subtotal))}
+                      value={redeemInput}
+                      onChange={(e) => setRedeemInput(e.target.value)}
+                      placeholder="0"
+                      className="w-20 rounded-[8px] border border-border px-2.5 py-1.5 text-[13px] outline-none focus:border-brand"
+                    />
+                    <span className="text-[12px] text-muted">แต้ม (สูงสุด {Math.min(customer.points, Math.floor(subtotal))})</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {showQr && qrPayload ? (
               <div className="mt-4 border-t border-border pt-4 text-center">
                 <div className="mb-3 text-[13px] font-semibold text-foreground">ให้ลูกค้าสแกนจ่าย ฿{formatBaht(totalAmount)}</div>
@@ -330,10 +445,19 @@ export function SellCart({
               </div>
             ) : (
               <div className="mt-4 border-t border-border pt-4">
+                {discountAmount > 0 && (
+                  <div className="mb-2 flex items-center justify-between text-[13px] text-accent-dark">
+                    <span>ส่วนลดแลกแต้ม</span>
+                    <span>-฿{formatBaht(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="mb-3 flex items-center justify-between text-[15px] font-semibold text-foreground">
                   <span>ยอดรวม</span>
                   <span>฿{formatBaht(totalAmount)}</span>
                 </div>
+                {customer && pointsToEarn > 0 && (
+                  <div className="mb-3 text-[11.5px] text-brand">ลูกค้าจะได้รับ {pointsToEarn} แต้ม</div>
+                )}
                 <div className="mb-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"

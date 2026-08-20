@@ -9,6 +9,9 @@ import {
   ReportsIcon,
   SearchIcon,
   MoreIcon,
+  UsersIcon,
+  ClipboardCheckIcon,
+  TagIcon,
 } from "@/components/icons";
 
 export type NavItem = {
@@ -25,6 +28,9 @@ export const SIDEBAR_ITEMS: NavItem[] = [
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", icon: CompareIcon },
   { href: "/income", label: "รายรับรายวัน", icon: IncomeIcon },
   { href: "/bills", label: "บิลซื้อสินค้า", icon: BillsIcon },
+  { href: "/customers", label: "ลูกค้า / สมาชิก", icon: UsersIcon },
+  { href: "/stock-take", label: "ตรวจนับสต๊อก", icon: ClipboardCheckIcon },
+  { href: "/labels", label: "พิมพ์ป้ายราคา", icon: TagIcon },
   { href: "/reports", label: "รายงานสรุป", icon: ReportsIcon },
 ];
 

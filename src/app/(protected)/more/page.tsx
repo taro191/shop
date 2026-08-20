@@ -3,12 +3,26 @@ import { getCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { planLabel } from "@/lib/format";
 import { logoutAction } from "@/app/actions/auth-actions";
-import { InventoryIcon, CompareIcon, ReportsIcon, DashboardIcon, LogoutIcon, GearIcon, ChevronRightIcon } from "@/components/icons";
+import {
+  InventoryIcon,
+  CompareIcon,
+  ReportsIcon,
+  DashboardIcon,
+  LogoutIcon,
+  GearIcon,
+  UsersIcon,
+  ClipboardCheckIcon,
+  TagIcon,
+  ChevronRightIcon,
+} from "@/components/icons";
 
 const DESKTOP_LINKS = [
   { href: "/dashboard", label: "แดชบอร์ด", desc: "ภาพรวมร้านค้าและยอดขาย", icon: DashboardIcon },
   { href: "/inventory", label: "คลังสินค้า", desc: "จัดการสต๊อกและราคาสินค้า", icon: InventoryIcon },
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", desc: "หาต้นทุนที่ถูกที่สุด", icon: CompareIcon },
+  { href: "/customers", label: "ลูกค้า / สมาชิก", desc: "รายชื่อลูกค้าและแต้มสะสม", icon: UsersIcon },
+  { href: "/stock-take", label: "ตรวจนับสต๊อก", desc: "เทียบยอดจริงกับระบบ", icon: ClipboardCheckIcon },
+  { href: "/labels", label: "พิมพ์ป้ายราคา", desc: "ป้ายราคาพร้อมบาร์โค้ด", icon: TagIcon },
   { href: "/reports", label: "รายงานสรุปซื้อขาย", desc: "รายวัน รายเดือน รายไตรมาส", icon: ReportsIcon },
 ];
 

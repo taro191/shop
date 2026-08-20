@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { getDashboardStats, getLowStockProducts, getRecentTransactions, getWeeklySales } from "@/lib/queries";
+import { getDashboardStats, getLowStockProducts, getExpiringProducts, getRecentTransactions, getWeeklySales } from "@/lib/queries";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { formatBaht, formatThaiDate, formatThaiTime } from "@/lib/format";
+import { expiryStatus } from "@/lib/status";
 import { IncomeIcon, InventoryIcon, BillsIcon } from "@/components/icons";
 
 export default async function DashboardPage() {
@@ -11,9 +12,10 @@ export default async function DashboardPage() {
   if (!user) return null;
   const storeId = user.storeId;
 
-  const [stats, lowStock, recent, weekly] = await Promise.all([
+  const [stats, lowStock, expiring, recent, weekly] = await Promise.all([
     getDashboardStats(storeId),
     getLowStockProducts(storeId, 4),
+    getExpiringProducts(storeId, 4),
     getRecentTransactions(storeId, 5),
     getWeeklySales(storeId),
   ]);
@@ -55,7 +57,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 px-5 pt-5 sm:px-8 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 px-5 pt-5 sm:px-8 lg:grid-cols-[1.3fr_1fr_1fr]">
         <div className="rounded-2xl border border-border bg-white p-5">
           <div className="mb-4 font-display text-[15px] font-semibold text-foreground">ยอดขาย 7 วันล่าสุด</div>
           <div className="flex h-[150px] items-end gap-3 px-1">
@@ -89,6 +91,27 @@ export default async function DashboardPage() {
                 </Link>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-white p-5">
+          <div className="mb-3.5 font-display text-[15px] font-semibold text-foreground">สินค้าใกล้หมดอายุ</div>
+          {expiring.length === 0 && <div className="py-6 text-center text-[13px] text-muted">ไม่มีสินค้าใกล้หมดอายุใน 14 วัน</div>}
+          <div className="flex flex-col">
+            {expiring.map((p) => {
+              const exp = expiryStatus(p.expiresAt);
+              return (
+                <div key={p.id} className="flex items-center justify-between border-b border-border py-2.5 last:border-none">
+                  <div className="min-w-0">
+                    <div className="truncate text-[13px] font-medium text-foreground">{p.name}</div>
+                    <div className="text-[11.5px] text-muted">{formatThaiDate(p.expiresAt!)}</div>
+                  </div>
+                  {exp && (
+                    <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-semibold ${exp.className}`}>{exp.text}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

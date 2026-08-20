@@ -15,6 +15,7 @@ const productSchema = z.object({
   costPrice: z.coerce.number().min(0),
   sellPrice: z.coerce.number().min(0),
   quantity: z.coerce.number().int().min(0),
+  expiresAt: z.string().trim().optional(),
 });
 
 export async function addProductAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -29,6 +30,7 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
     costPrice: formData.get("costPrice"),
     sellPrice: formData.get("sellPrice"),
     quantity: formData.get("quantity"),
+    expiresAt: formData.get("expiresAt") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
@@ -50,6 +52,7 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
       costPrice: parsed.data.costPrice,
       sellPrice: parsed.data.sellPrice,
       quantity: parsed.data.quantity,
+      expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
     },
   });
 

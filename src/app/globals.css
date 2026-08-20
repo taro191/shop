@@ -54,7 +54,9 @@ body {
     visibility: hidden;
   }
   #receipt-print,
-  #receipt-print * {
+  #receipt-print *,
+  #labels-print,
+  #labels-print * {
     visibility: visible;
   }
   #receipt-print {
@@ -65,5 +67,9 @@ body {
     border: none !important;
     box-shadow: none !important;
     padding: 12px !important;
+  }
+  #labels-print {
+    position: absolute;
+    inset: 0;
   }
 }

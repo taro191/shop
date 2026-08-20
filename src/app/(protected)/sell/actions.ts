@@ -15,6 +15,8 @@ const checkoutSchema = z.object({
     )
     .min(1, "ตะกร้าว่าง กรุณาเพิ่มสินค้าก่อนขาย"),
   method: z.enum(["CASH", "TRANSFER"]),
+  customerId: z.string().min(1).optional(),
+  pointsToRedeem: z.number().int().min(0).optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
@@ -26,12 +28,19 @@ export type CheckoutResult =
         method: "CASH" | "TRANSFER";
         soldAt: string;
         lines: { name: string; unit: string; quantity: number; unitPrice: number; subtotal: number }[];
+        discountAmount: number;
+        pointsEarned: number;
+        pointsRedeemed: number;
+        customerName: string | null;
       } }
   | { ok: false; error: string };
 
 /** A checkout failure that is safe to show verbatim to the cashier (stock, validation). */
 class CheckoutError extends Error {}
 
+/** Loyalty rule (default, no per-store config yet): spend ฿1 (after discount), earn
+ * 1 point. Redeem points 1:1 as a baht discount, capped by both the customer's
+ * balance and the cart subtotal (can't go negative). */
 export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult> {
   const session = await getSession();
   if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
@@ -54,17 +63,17 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
       });
       const productMap = new Map(products.map((p) => [p.id, p]));
 
-      let amount = 0;
+      let subtotal = 0;
       const lineItemsData: { productId: string; quantity: number; unitPrice: number; unitCost: number; subtotal: number }[] = [];
       const lines: { name: string; unit: string; quantity: number; unitPrice: number; subtotal: number }[] = [];
 
       for (const [productId, quantity] of merged) {
         const product = productMap.get(productId);
         if (!product) throw new CheckoutError("มีสินค้าบางรายการที่ไม่พบในระบบ กรุณารีเฟรชและลองใหม่");
-        const subtotal = product.sellPrice * quantity;
-        amount += subtotal;
-        lineItemsData.push({ productId, quantity, unitPrice: product.sellPrice, unitCost: product.costPrice, subtotal });
-        lines.push({ name: product.name, unit: product.unit, quantity, unitPrice: product.sellPrice, subtotal });
+        const lineSubtotal = product.sellPrice * quantity;
+        subtotal += lineSubtotal;
+        lineItemsData.push({ productId, quantity, unitPrice: product.sellPrice, unitCost: product.costPrice, subtotal: lineSubtotal });
+        lines.push({ name: product.name, unit: product.unit, quantity, unitPrice: product.sellPrice, subtotal: lineSubtotal });
       }
 
       // Atomic, race-safe stock decrement: the WHERE clause re-checks quantity at
@@ -82,6 +91,29 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         }
       }
 
+      // Loyalty: validate the customer belongs to this store and cap redemption.
+      let customer: { id: string; name: string; points: number } | null = null;
+      if (parsed.data.customerId) {
+        const c = await tx.customer.findFirst({ where: { id: parsed.data.customerId, storeId: session.storeId } });
+        if (!c) throw new CheckoutError("ไม่พบข้อมูลลูกค้าที่เลือก");
+        customer = c;
+      }
+
+      const requestedRedeem = parsed.data.pointsToRedeem ?? 0;
+      const discountAmount = customer ? Math.min(requestedRedeem, customer.points, Math.floor(subtotal)) : 0;
+      const amount = subtotal - discountAmount;
+      const pointsEarned = customer ? Math.floor(amount) : 0;
+
+      if (customer && (discountAmount > 0 || pointsEarned > 0)) {
+        await tx.customer.update({ where: { id: customer.id }, data: { points: { increment: pointsEarned - discountAmount } } });
+        if (discountAmount > 0) {
+          await tx.loyaltyEntry.create({ data: { customerId: customer.id, type: "REDEEM", points: discountAmount, note: "แลกส่วนลดตอนชำระเงิน" } });
+        }
+        if (pointsEarned > 0) {
+          await tx.loyaltyEntry.create({ data: { customerId: customer.id, type: "EARN", points: pointsEarned, note: "ได้รับจากการซื้อสินค้า" } });
+        }
+      }
+
       const summary = lines.map((l) => `${l.name} x${l.quantity}`).join(", ");
       const created = await tx.incomeTransaction.create({
         data: {
@@ -89,11 +121,25 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
           items: summary,
           method: parsed.data.method,
           amount,
+          customerId: customer?.id,
+          pointsEarned,
+          pointsRedeemed: discountAmount,
+          discountAmount,
           lineItems: { create: lineItemsData },
         },
       });
 
-      return { id: created.id, amount, method: created.method, soldAt: created.soldAt, lines };
+      return {
+        id: created.id,
+        amount,
+        method: created.method,
+        soldAt: created.soldAt,
+        lines,
+        discountAmount,
+        pointsEarned,
+        pointsRedeemed: discountAmount,
+        customerName: customer?.name ?? null,
+      };
     });
 
     revalidatePath("/sell");
@@ -102,6 +148,7 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
     revalidatePath("/search");
     revalidatePath("/dashboard");
     revalidatePath("/reports");
+    revalidatePath("/customers");
 
     return {
       ok: true,
@@ -111,6 +158,10 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         method: transaction.method,
         soldAt: transaction.soldAt.toISOString(),
         lines: transaction.lines,
+        discountAmount: transaction.discountAmount,
+        pointsEarned: transaction.pointsEarned,
+        pointsRedeemed: transaction.pointsRedeemed,
+        customerName: transaction.customerName,
       },
     };
   } catch (e) {

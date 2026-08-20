@@ -37,6 +37,14 @@ export async function getLowStockProducts(storeId: string, limit = 4) {
   });
 }
 
+export async function getExpiringProducts(storeId: string, limit = 4) {
+  return prisma.product.findMany({
+    where: { storeId, expiresAt: { not: null, lte: addDays(new Date(), 14) } },
+    orderBy: { expiresAt: "asc" },
+    take: limit,
+  });
+}
+
 export async function getRecentTransactions(storeId: string, limit = 5) {
   return prisma.incomeTransaction.findMany({
     where: { storeId },
