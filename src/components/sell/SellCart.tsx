@@ -4,8 +4,10 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { checkoutSale, type CheckoutResult } from "@/app/(protected)/sell/actions";
 import { SellScanner } from "@/components/sell/SellScanner";
+import { PromptPayQR } from "@/components/PromptPayQR";
+import { buildPromptPayPayload } from "@/lib/promptpay";
 import { CartIcon, PlusIcon, MinusIcon, TrashIcon, CheckCircleIcon } from "@/components/icons";
-import { formatBaht, formatThaiTime } from "@/lib/format";
+import { formatBaht, formatThaiTime, formatThaiDate } from "@/lib/format";
 import { productStockStatus } from "@/lib/status";
 
 type ProductRow = {
@@ -21,11 +23,20 @@ type ProductRow = {
 type CartLine = { productId: string; name: string; unit: string; sellPrice: number; stock: number; qty: number };
 type Receipt = Extract<CheckoutResult, { ok: true }>["receipt"];
 
-export function SellCart({ products }: { products: ProductRow[] }) {
+export function SellCart({
+  products,
+  storeName,
+  promptPayId,
+}: {
+  products: ProductRow[];
+  storeName: string;
+  promptPayId: string | null;
+}) {
   const [mode, setMode] = useState<"type" | "scan">("type");
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<Map<string, CartLine>>(new Map());
   const [method, setMethod] = useState<"CASH" | "TRANSFER">("CASH");
+  const [showQr, setShowQr] = useState(false);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
@@ -46,6 +57,15 @@ export function SellCart({ products }: { products: ProductRow[] }) {
   const cartLines = useMemo(() => [...cart.values()], [cart]);
   const totalQty = cartLines.reduce((s, l) => s + l.qty, 0);
   const totalAmount = cartLines.reduce((s, l) => s + l.qty * l.sellPrice, 0);
+
+  const qrPayload = useMemo(() => {
+    if (!promptPayId || totalAmount <= 0) return null;
+    try {
+      return buildPromptPayPayload(promptPayId, totalAmount);
+    } catch {
+      return null;
+    }
+  }, [promptPayId, totalAmount]);
 
   function addToCart(product: ProductRow, qty = 1) {
     setError(null);
@@ -89,6 +109,15 @@ export function SellCart({ products }: { products: ProductRow[] }) {
     setTimeout(() => setScanNotice((n) => (n?.includes(product.name) ? null : n)), 2000);
   }
 
+  function requestCheckout() {
+    if (cartLines.length === 0) return;
+    if (method === "TRANSFER" && qrPayload) {
+      setShowQr(true);
+      return;
+    }
+    submitSale();
+  }
+
   function submitSale() {
     if (cartLines.length === 0) return;
     setError(null);
@@ -100,8 +129,10 @@ export function SellCart({ products }: { products: ProductRow[] }) {
       if (result.ok) {
         setReceipt(result.receipt);
         setCart(new Map());
+        setShowQr(false);
       } else {
         setError(result.error);
+        setShowQr(false);
       }
     });
   }
@@ -114,14 +145,17 @@ export function SellCart({ products }: { products: ProductRow[] }) {
   if (receipt) {
     return (
       <div className="mx-auto max-w-[480px] px-5 pb-10 pt-4 sm:px-8">
-        <div className="rounded-2xl border border-border bg-white p-6 text-center">
-          <div className="mx-auto mb-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light text-brand">
+        <div id="receipt-print" className="rounded-2xl border border-border bg-white p-6 text-center">
+          <div className="mx-auto mb-3.5 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light text-brand print:hidden">
             <CheckCircleIcon className="h-7 w-7" strokeWidth={2} />
           </div>
-          <div className="mb-1 font-display text-lg font-semibold text-foreground">ขายสำเร็จ</div>
-          <div className="mb-5 text-[12.5px] text-muted">{formatThaiTime(new Date(receipt.soldAt))}</div>
+          <div className="hidden font-display text-base font-semibold text-foreground print:block">{storeName}</div>
+          <div className="mb-1 font-display text-lg font-semibold text-foreground">ใบเสร็จรับเงิน</div>
+          <div className="mb-5 text-[12.5px] text-muted">
+            {formatThaiDate(new Date(receipt.soldAt))} · {formatThaiTime(new Date(receipt.soldAt))} · เลขที่ {receipt.id.slice(-8).toUpperCase()}
+          </div>
 
-          <div className="mb-5 flex flex-col gap-2 rounded-xl bg-background p-4 text-left">
+          <div className="mb-5 flex flex-col gap-2 rounded-xl bg-background p-4 text-left print:rounded-none print:bg-white print:border-t print:border-b print:border-dashed print:border-foreground/40 print:py-3">
             {receipt.lines.map((l, i) => (
               <div key={i} className="flex justify-between text-[13px]">
                 <span className="text-foreground/80">
@@ -137,9 +171,18 @@ export function SellCart({ products }: { products: ProductRow[] }) {
             <div className="text-[11.5px] text-muted">ชำระโดย {receipt.method === "CASH" ? "เงินสด" : "เงินโอน / QR"}</div>
           </div>
 
-          <button type="button" onClick={newSale} className="w-full rounded-[11px] bg-brand py-3 text-[14px] font-semibold text-white">
-            ขายรายการใหม่
-          </button>
+          <div className="flex gap-2.5 print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex-1 rounded-[11px] border border-border py-3 text-[13.5px] font-semibold text-foreground/75"
+            >
+              พิมพ์ใบเสร็จ
+            </button>
+            <button type="button" onClick={newSale} className="flex-1 rounded-[11px] bg-brand py-3 text-[14px] font-semibold text-white">
+              ขายรายการใหม่
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -259,45 +302,83 @@ export function SellCart({ products }: { products: ProductRow[] }) {
               </div>
             )}
 
-            <div className="mt-4 border-t border-border pt-4">
-              <div className="mb-3 flex items-center justify-between text-[15px] font-semibold text-foreground">
-                <span>ยอดรวม</span>
-                <span>฿{formatBaht(totalAmount)}</span>
+            {showQr && qrPayload ? (
+              <div className="mt-4 border-t border-border pt-4 text-center">
+                <div className="mb-3 text-[13px] font-semibold text-foreground">ให้ลูกค้าสแกนจ่าย ฿{formatBaht(totalAmount)}</div>
+                <div className="mb-3 flex justify-center">
+                  <PromptPayQR payload={qrPayload} size={200} />
+                </div>
+                <div className="mb-4 text-[11.5px] text-muted">QR นี้ไม่ยืนยันยอดอัตโนมัติ กดปุ่มด้านล่างหลังลูกค้าโอนแล้วเท่านั้น</div>
+                {error && <div className="mb-3 rounded-lg bg-danger-light px-3.5 py-2.5 text-[12.5px] text-danger">{error}</div>}
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowQr(false)}
+                    className="flex-1 rounded-[11px] border border-border py-3 text-[13.5px] font-semibold text-foreground/70"
+                  >
+                    ย้อนกลับ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={submitSale}
+                    disabled={pending}
+                    className="flex-1 rounded-[11px] bg-brand py-3 text-[13.5px] font-semibold text-white disabled:opacity-50"
+                  >
+                    {pending ? "กำลังบันทึก..." : "ลูกค้าชำระแล้ว"}
+                  </button>
+                </div>
               </div>
-              <div className="mb-3 grid grid-cols-2 gap-2">
+            ) : (
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="mb-3 flex items-center justify-between text-[15px] font-semibold text-foreground">
+                  <span>ยอดรวม</span>
+                  <span>฿{formatBaht(totalAmount)}</span>
+                </div>
+                <div className="mb-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMethod("CASH")}
+                    className={`rounded-[9px] border py-2.5 text-[13px] font-medium ${method === "CASH" ? "border-brand bg-brand-light text-brand" : "border-border text-foreground/70"}`}
+                  >
+                    เงินสด
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMethod("TRANSFER")}
+                    className={`rounded-[9px] border py-2.5 text-[13px] font-medium ${method === "TRANSFER" ? "border-accent bg-accent-light text-accent-dark" : "border-border text-foreground/70"}`}
+                  >
+                    เงินโอน / QR
+                  </button>
+                </div>
+
+                {method === "TRANSFER" && !qrPayload && (
+                  <div className="mb-3 rounded-lg bg-accent-light px-3.5 py-2.5 text-[12px] text-accent-dark">
+                    ยังไม่ได้ตั้งค่าพร้อมเพย์ของร้าน{" "}
+                    <Link href="/settings" className="font-semibold underline">
+                      ไปตั้งค่า
+                    </Link>{" "}
+                    เพื่อแสดง QR ให้ลูกค้าสแกน
+                  </div>
+                )}
+
+                {error && <div className="mb-3 rounded-lg bg-danger-light px-3.5 py-2.5 text-[12.5px] text-danger">{error}</div>}
+
                 <button
                   type="button"
-                  onClick={() => setMethod("CASH")}
-                  className={`rounded-[9px] border py-2.5 text-[13px] font-medium ${method === "CASH" ? "border-brand bg-brand-light text-brand" : "border-border text-foreground/70"}`}
+                  onClick={requestCheckout}
+                  disabled={cartLines.length === 0 || pending}
+                  className="w-full rounded-[11px] bg-brand py-3 text-[14px] font-semibold text-white disabled:opacity-50"
                 >
-                  เงินสด
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMethod("TRANSFER")}
-                  className={`rounded-[9px] border py-2.5 text-[13px] font-medium ${method === "TRANSFER" ? "border-accent bg-accent-light text-accent-dark" : "border-border text-foreground/70"}`}
-                >
-                  เงินโอน / QR
+                  {pending ? "กำลังบันทึก..." : method === "TRANSFER" && qrPayload ? "แสดง QR รับเงิน" : "ยืนยันการขาย"}
                 </button>
               </div>
-
-              {error && <div className="mb-3 rounded-lg bg-danger-light px-3.5 py-2.5 text-[12.5px] text-danger">{error}</div>}
-
-              <button
-                type="button"
-                onClick={submitSale}
-                disabled={cartLines.length === 0 || pending}
-                className="w-full rounded-[11px] bg-brand py-3 text-[14px] font-semibold text-white disabled:opacity-50"
-              >
-                {pending ? "กำลังบันทึก..." : "ยืนยันการขาย"}
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Mobile floating cart bar */}
-      {cartLines.length > 0 && (
+      {cartLines.length > 0 && !showQr && (
         <Link
           href="#cart"
           className="fixed inset-x-4 bottom-[86px] z-10 flex items-center justify-between rounded-[13px] bg-brand-dark px-4 py-3.5 text-white shadow-[0_8px_24px_rgba(20,30,20,0.25)] lg:hidden"

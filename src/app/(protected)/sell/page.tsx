@@ -16,7 +16,7 @@ export default async function SellPage() {
   return (
     <div className="pb-4">
       <PageHeader title="ขายสินค้า" subtitle="เลือกหรือสแกนสินค้าเพื่อขาย ระบบจะตัดสต๊อกให้อัตโนมัติ" />
-      <SellCart products={products} />
+      <SellCart products={products} storeName={user.store.name} promptPayId={user.store.promptPayId} />
     </div>
   );
 }

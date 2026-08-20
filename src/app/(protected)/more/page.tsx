@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { planLabel } from "@/lib/format";
 import { logoutAction } from "@/app/actions/auth-actions";
-import { InventoryIcon, CompareIcon, ReportsIcon, DashboardIcon, LogoutIcon, ChevronRightIcon } from "@/components/icons";
+import { InventoryIcon, CompareIcon, ReportsIcon, DashboardIcon, LogoutIcon, GearIcon, ChevronRightIcon } from "@/components/icons";
 
 const DESKTOP_LINKS = [
   { href: "/dashboard", label: "แดชบอร์ด", desc: "ภาพรวมร้านค้าและยอดขาย", icon: DashboardIcon },
@@ -61,13 +61,23 @@ export default async function MorePage() {
       <div className="px-5 pt-6 sm:px-8">
         <div className="mb-2.5 px-0.5 text-xs font-semibold text-muted">บัญชี</div>
         <div className="overflow-hidden rounded-2xl border border-border bg-white">
-          <div className="flex items-center gap-3 px-4 py-3.5">
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3.5">
             <div className="min-w-0 flex-grow">
               <div className="text-[13.5px] font-medium text-foreground">{user.name}</div>
               <div className="mt-0.5 text-[11px] text-muted">{user.role === "OWNER" ? "เจ้าของร้าน" : "พนักงาน"} · {user.phone}</div>
             </div>
           </div>
-          <form action={logoutAction} className="border-t border-border">
+          <Link href="/settings" className="flex items-center gap-3 border-b border-border px-4 py-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-brand-light">
+              <GearIcon className="h-[18px] w-[18px] text-brand" />
+            </div>
+            <div className="flex-grow">
+              <div className="text-[13.5px] font-medium text-foreground">ข้อมูลร้านค้า</div>
+              <div className="mt-0.5 text-[11px] text-muted">ชื่อร้าน และ QR พร้อมเพย์รับเงิน</div>
+            </div>
+            <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted" />
+          </Link>
+          <form action={logoutAction}>
             <button type="submit" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-danger-light">
                 <LogoutIcon className="h-[18px] w-[18px] text-danger" />

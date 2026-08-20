@@ -45,3 +45,25 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Printing a receipt: hide everything except the #receipt-print card (nav, headers,
+ * buttons already carry print:hidden). Sized for both plain paper and narrow thermal
+ * receipt rolls — the browser's print dialog scales it to whatever paper is selected. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-print,
+  #receipt-print * {
+    visibility: visible;
+  }
+  #receipt-print {
+    position: absolute;
+    inset: 0;
+    max-width: 320px;
+    margin: 0 auto;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 12px !important;
+  }
+}

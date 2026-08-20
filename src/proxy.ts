@@ -11,6 +11,7 @@ const PROTECTED_PREFIXES = [
   "/reports",
   "/search",
   "/more",
+  "/settings",
 ];
 
 const AUTH_ONLY_PATHS = ["/login"];

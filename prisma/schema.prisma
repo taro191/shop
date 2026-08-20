@@ -28,10 +28,12 @@ enum BillStatus {
 }
 
 model Store {
-  id        String   @id @default(cuid())
-  name      String
-  plan      String   @default("trial")
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String
+  plan        String   @default("trial")
+  /// Thai PromptPay proxy: 10-digit mobile (0XXXXXXXXX) or 13-digit national/tax ID. Null = QR payment not set up yet.
+  promptPayId String?
+  createdAt   DateTime @default(now())
 
   users        User[]
   products     Product[]
