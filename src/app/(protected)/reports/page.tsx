@@ -23,17 +23,34 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
     getAverageMarginRatio(user.storeId),
   ]);
 
-  const withProfit = rows.map((r) => ({ ...r, cost: Math.round(r.sales * (1 - marginRatio)), profit: Math.round(r.sales * marginRatio) }));
+  // Blend real COGS from POS checkouts (rows[].realCost) with the estimated margin
+  // ratio for any sales that still lack line items (older/manual quick-sale entries).
+  const withProfit = rows.map((r) => {
+    const estimatedSales = Math.max(r.sales - r.salesWithRealCost, 0);
+    const cost = Math.round(r.realCost + estimatedSales * (1 - marginRatio));
+    return { ...r, cost, profit: r.sales - cost };
+  });
   const totalSales = withProfit.reduce((s, r) => s + r.sales, 0);
   const totalCost = withProfit.reduce((s, r) => s + r.cost, 0);
   const totalProfit = totalSales - totalCost;
+  const totalWithRealCost = withProfit.reduce((s, r) => s + r.salesWithRealCost, 0);
   const maxSales = Math.max(...withProfit.map((r) => r.sales), 1);
+
+  const realCoveragePct = totalSales > 0 ? Math.round((totalWithRealCost / totalSales) * 100) : 0;
+  const costSubtitle =
+    totalSales === 0
+      ? "ภาพรวมยอดขาย ต้นทุน และกำไร แยกตามช่วงเวลา"
+      : realCoveragePct >= 100
+        ? "ต้นทุน/กำไรคำนวณจากข้อมูลการขายจริงทั้งหมด (ราคาทุน ณ เวลาขาย)"
+        : realCoveragePct === 0
+          ? "ต้นทุน/กำไรเป็นค่าประมาณการจากอัตรากำไรเฉลี่ยของสินค้า (ยังไม่มีข้อมูลขายจากหน้าขายสินค้า)"
+          : `ต้นทุน/กำไร ${realCoveragePct}% คำนวณจากข้อมูลขายจริง ส่วนที่เหลือเป็นค่าประมาณการ`;
 
   return (
     <div className="pb-10">
       <PageHeader
         title="รายงานสรุปซื้อขาย"
-        subtitle="ภาพรวมยอดขาย ต้นทุน และกำไร แยกตามช่วงเวลา (ต้นทุน/กำไรเป็นค่าประมาณการจากอัตรากำไรเฉลี่ยของสินค้า)"
+        subtitle={costSubtitle}
         action={
           <FilterChips
             basePath="/reports"
@@ -48,9 +65,9 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
 
       <div className="grid grid-cols-1 gap-4 px-5 pt-5 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
         <StatTile label={`ยอดขายรวม (${PERIOD_LABELS[period].tab})`} value={`฿ ${formatBaht(totalSales)}`} />
-        <StatTile label="ต้นทุนรวม (ประมาณการ)" value={`฿ ${formatBaht(totalCost)}`} />
-        <StatTile label="กำไรสุทธิ (ประมาณการ)" value={`฿ ${formatBaht(totalProfit)}`} />
-        <StatTile label="อัตรากำไรเฉลี่ย" value={`${Math.round(marginRatio * 1000) / 10}%`} />
+        <StatTile label="ต้นทุนรวม" value={`฿ ${formatBaht(totalCost)}`} />
+        <StatTile label="กำไรสุทธิ" value={`฿ ${formatBaht(totalProfit)}`} />
+        <StatTile label="อัตรากำไรเฉลี่ยของสินค้า" value={`${Math.round(marginRatio * 1000) / 10}%`} />
       </div>
 
       <div className="px-5 pt-5 sm:px-8">

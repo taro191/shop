@@ -71,6 +71,7 @@ model Product {
 
   supplierPrices SupplierPrice[]
   billLineItems  BillLineItem[]
+  saleLineItems  SaleLineItem[]
 
   @@unique([storeId, barcode])
   @@index([storeId])
@@ -106,15 +107,35 @@ model SupplierPrice {
 }
 
 model IncomeTransaction {
-  id     String        @id @default(cuid())
+  id      String        @id @default(cuid())
   storeId String
-  store  Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  items  String
-  method PaymentMethod
-  amount Float
-  soldAt DateTime      @default(now())
+  store   Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  items   String
+  method  PaymentMethod
+  amount  Float
+  soldAt  DateTime      @default(now())
+
+  lineItems SaleLineItem[]
 
   @@index([storeId, soldAt])
+}
+
+/** One product line within a checked-out sale. Populated by the POS checkout
+ * flow (src/app/(protected)/sell); older/manual "quick sale" transactions
+ * have none, so reports blend real cost here with an estimate for those. */
+model SaleLineItem {
+  id            String            @id @default(cuid())
+  transactionId String
+  transaction   IncomeTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product           @relation(fields: [productId], references: [id])
+  quantity      Int
+  unitPrice     Float
+  unitCost      Float
+  subtotal      Float
+
+  @@index([transactionId])
+  @@index([productId])
 }
 
 model PurchaseBill {

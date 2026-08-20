@@ -78,17 +78,54 @@ async function main() {
   }
 
   const today = new Date();
+
+  // Legacy/manual "quick sale" entries — no line items, so reports estimate their
+  // cost from the store's average margin (mirrors real quick-add entries from
+  // the daily-income screen, which aren't tied to specific catalog items).
   const txns: { items: string; method: "CASH" | "TRANSFER"; amount: number; soldAt: Date }[] = [
-    { items: "มาม่าต้มยำกุ้ง x3, น้ำอัดลม x2", method: "CASH", amount: 85, soldAt: hoursAgo(today, 2) },
     { items: "ผงซักฟอก 1kg, สบู่ก้อน x2", method: "TRANSFER", amount: 142, soldAt: hoursAgo(today, 3) },
     { items: "ข้าวสารหอมมะลิ 5kg", method: "CASH", amount: 210, soldAt: hoursAgo(today, 4) },
     { items: "ไข่ไก่เบอร์ 0 x2 แผง", method: "TRANSFER", amount: 230, soldAt: hoursAgo(today, 5) },
     { items: "น้ำปลา, น้ำมันพืช, ซอสปรุงรส", method: "CASH", amount: 138, soldAt: hoursAgo(today, 7) },
-    { items: "นมถั่วเหลือง x6", method: "TRANSFER", amount: 96, soldAt: hoursAgo(today, 8) },
   ];
   await prisma.incomeTransaction.createMany({
     data: txns.map((t) => ({ storeId: store.id, items: t.items, method: t.method, amount: t.amount, soldAt: t.soldAt })),
   });
+
+  // POS checkouts (via /sell) — carry real SaleLineItem rows with cost at time of
+  // sale, so reports use exact profit for these instead of an estimate.
+  const mama = products[5]; // มาม่าต้มยำกุ้ง
+  const cola = products[4]; // น้ำอัดลมโคล่า 325ml
+  const soyMilk = products[9]; // นมถั่วเหลืองแลคตาซอย
+
+  await prisma.incomeTransaction.create({
+    data: {
+      storeId: store.id,
+      items: `${mama.name} x3, ${cola.name} x2`,
+      method: "CASH",
+      amount: mama.sellPrice * 3 + cola.sellPrice * 2,
+      soldAt: hoursAgo(today, 2),
+      lineItems: {
+        create: [
+          { productId: mama.id, quantity: 3, unitPrice: mama.sellPrice, unitCost: mama.costPrice, subtotal: mama.sellPrice * 3 },
+          { productId: cola.id, quantity: 2, unitPrice: cola.sellPrice, unitCost: cola.costPrice, subtotal: cola.sellPrice * 2 },
+        ],
+      },
+    },
+  });
+  await prisma.incomeTransaction.create({
+    data: {
+      storeId: store.id,
+      items: `${soyMilk.name} x6`,
+      method: "TRANSFER",
+      amount: soyMilk.sellPrice * 6,
+      soldAt: hoursAgo(today, 8),
+      lineItems: { create: [{ productId: soyMilk.id, quantity: 6, unitPrice: soyMilk.sellPrice, unitCost: soyMilk.costPrice, subtotal: soyMilk.sellPrice * 6 }] },
+    },
+  });
+  await prisma.product.update({ where: { id: mama.id }, data: { quantity: { decrement: 3 } } });
+  await prisma.product.update({ where: { id: cola.id }, data: { quantity: { decrement: 2 } } });
+  await prisma.product.update({ where: { id: soyMilk.id }, data: { quantity: { decrement: 6 } } });
 
   const bill1 = await prisma.purchaseBill.create({
     data: {
@@ -133,7 +170,7 @@ async function main() {
     ],
   });
 
-  console.log("Seeded store:", store.name, "with", products.length, "products,", txns.length, "transactions, bills", bill1.billNo, bill2.billNo, "+3 more.");
+  console.log("Seeded store:", store.name, "with", products.length, "products,", txns.length + 2, "transactions (2 with real POS line items), bills", bill1.billNo, bill2.billNo, "+3 more.");
   console.log("Login with phone 0812345678 / password password123");
 }
 

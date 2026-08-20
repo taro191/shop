@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import {
   DashboardIcon,
+  CartIcon,
   InventoryIcon,
   CompareIcon,
   IncomeIcon,
@@ -19,6 +20,7 @@ export type NavItem = {
 /** Full navigation, shown in the desktop sidebar. */
 export const SIDEBAR_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "แดชบอร์ด", icon: DashboardIcon },
+  { href: "/sell", label: "ขายสินค้า", icon: CartIcon },
   { href: "/inventory", label: "คลังสินค้า", icon: InventoryIcon },
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", icon: CompareIcon },
   { href: "/income", label: "รายรับรายวัน", icon: IncomeIcon },
@@ -28,6 +30,7 @@ export const SIDEBAR_ITEMS: NavItem[] = [
 
 /** Daily-operation items, shown in the mobile bottom tab bar. */
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
+  { href: "/sell", label: "ขายสินค้า", icon: CartIcon },
   { href: "/search", label: "ค้นหาราคา", icon: SearchIcon },
   { href: "/income", label: "รายรับ", icon: IncomeIcon },
   { href: "/bills", label: "บิลซื้อ", icon: BillsIcon },

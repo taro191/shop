@@ -12,6 +12,43 @@ const base = {
   strokeLinejoin: "round" as const,
 };
 
+export function CartIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <circle cx="9" cy="20" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="20" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M2.5 3h2l2.3 12.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 7H6" />
+    </svg>
+  );
+}
+
+export function MinusIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M4 7h16" />
+      <path d="M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7" />
+      <path d="M6 7l1 13.5A1.5 1.5 0 0 0 8.5 22h7a1.5 1.5 0 0 0 1.5-1.5L18 7" />
+    </svg>
+  );
+}
+
+export function CheckCircleIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.3l2.3 2.3 4.7-5" />
+    </svg>
+  );
+}
+
 export function DashboardIcon(props: IconProps) {
   return (
     <svg {...base} {...props} stroke="currentColor">

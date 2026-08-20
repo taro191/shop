@@ -3,6 +3,7 @@ import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session-token";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
+  "/sell",
   "/inventory",
   "/suppliers",
   "/income",

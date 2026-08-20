@@ -84,30 +84,42 @@ const monthLabel = new Intl.DateTimeFormat("th-TH", { month: "short" });
 
 export type ReportPeriod = "daily" | "monthly" | "quarterly";
 
+type ReportBucket = { sales: number; bills: number; realCost: number; salesWithRealCost: number };
+function emptyBucket(): ReportBucket {
+  return { sales: 0, bills: 0, realCost: 0, salesWithRealCost: 0 };
+}
+
+/** Sales rows per period, with real COGS from POS checkouts (SaleLineItem.unitCost)
+ * where available, and the portion still missing it (older/manual quick-sale entries
+ * with no line items) — the caller blends that remainder with the estimated margin
+ * ratio from getAverageMarginRatio. */
 export async function getReportRows(storeId: string, period: ReportPeriod) {
   const now = new Date();
+
+  const applyTxn = (bucket: ReportBucket, t: { amount: number; lineItems: { unitCost: number; quantity: number }[] }) => {
+    bucket.sales += t.amount;
+    bucket.bills += 1;
+    if (t.lineItems.length > 0) {
+      bucket.salesWithRealCost += t.amount;
+      bucket.realCost += t.lineItems.reduce((s, li) => s + li.unitCost * li.quantity, 0);
+    }
+  };
+
+  const select = { amount: true, soldAt: true, lineItems: { select: { unitCost: true, quantity: true } } } as const;
 
   if (period === "daily") {
     const start = startOfDay(addDays(now, -6));
     const end = endOfDay(now);
-    const txns = await prisma.incomeTransaction.findMany({
-      where: { storeId, soldAt: { gte: start, lte: end } },
-      select: { amount: true, soldAt: true },
-    });
-    const buckets = new Map<string, { sales: number; bills: number }>();
-    for (let i = 0; i < 7; i++) buckets.set(dateKey(addDays(start, i)), { sales: 0, bills: 0 });
+    const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end } }, select });
+    const buckets = new Map<string, ReportBucket>();
+    for (let i = 0; i < 7; i++) buckets.set(dateKey(addDays(start, i)), emptyBucket());
     for (const t of txns) {
-      const key = dateKey(t.soldAt);
-      const b = buckets.get(key);
-      if (b) {
-        b.sales += t.amount;
-        b.bills += 1;
-      }
+      const b = buckets.get(dateKey(t.soldAt));
+      if (b) applyTxn(b, t);
     }
     return Array.from(buckets.entries()).map(([key, v]) => ({
       label: new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short" }).format(parseDateKey(key)),
-      sales: v.sales,
-      bills: v.bills,
+      ...v,
     }));
   }
 
@@ -115,17 +127,10 @@ export async function getReportRows(storeId: string, period: ReportPeriod) {
     const year = now.getFullYear();
     const start = new Date(year, 0, 1);
     const end = endOfDay(now);
-    const txns = await prisma.incomeTransaction.findMany({
-      where: { storeId, soldAt: { gte: start, lte: end } },
-      select: { amount: true, soldAt: true },
-    });
+    const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end } }, select });
     const months = now.getMonth() + 1;
-    const rows = Array.from({ length: months }, (_, i) => ({ label: monthLabel.format(new Date(year, i, 1)), sales: 0, bills: 0 }));
-    for (const t of txns) {
-      const idx = t.soldAt.getMonth();
-      rows[idx].sales += t.amount;
-      rows[idx].bills += 1;
-    }
+    const rows = Array.from({ length: months }, (_, i) => ({ label: monthLabel.format(new Date(year, i, 1)), ...emptyBucket() }));
+    for (const t of txns) applyTxn(rows[t.soldAt.getMonth()], t);
     return rows;
   }
 
@@ -133,16 +138,9 @@ export async function getReportRows(storeId: string, period: ReportPeriod) {
   const year = now.getFullYear();
   const start = new Date(year, 0, 1);
   const end = endOfDay(now);
-  const txns = await prisma.incomeTransaction.findMany({
-    where: { storeId, soldAt: { gte: start, lte: end } },
-    select: { amount: true, soldAt: true },
-  });
+  const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end } }, select });
   const currentQuarter = Math.floor(now.getMonth() / 3);
-  const rows = Array.from({ length: currentQuarter + 1 }, (_, i) => ({ label: `ไตรมาส ${i + 1}`, sales: 0, bills: 0 }));
-  for (const t of txns) {
-    const q = Math.floor(t.soldAt.getMonth() / 3);
-    rows[q].sales += t.amount;
-    rows[q].bills += 1;
-  }
+  const rows = Array.from({ length: currentQuarter + 1 }, (_, i) => ({ label: `ไตรมาส ${i + 1}`, ...emptyBucket() }));
+  for (const t of txns) applyTxn(rows[Math.floor(t.soldAt.getMonth() / 3)], t);
   return rows;
 }
