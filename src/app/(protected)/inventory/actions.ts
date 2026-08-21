@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -42,7 +43,7 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
     if (existing) return { error: "มีสินค้าที่ใช้บาร์โค้ดนี้อยู่แล้ว" };
   }
 
-  await prisma.product.create({
+  const product = await prisma.product.create({
     data: {
       storeId: session.storeId,
       name: parsed.data.name,
@@ -54,6 +55,17 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
       quantity: parsed.data.quantity,
       expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
     },
+  });
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "product.create",
+    entityType: "Product",
+    entityId: product.id,
+    summary: `เพิ่มสินค้า "${product.name}"`,
   });
 
   revalidatePath("/inventory");

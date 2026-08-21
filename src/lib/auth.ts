@@ -49,8 +49,20 @@ export async function getCurrentUser() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    include: { store: true },
+    include: { store: true, branch: true },
   });
-  if (!user || user.storeId !== session.storeId) return null;
+  if (!user || user.storeId !== session.storeId || !user.active) return null;
   return user;
+}
+
+/** Session + a role check, for Server Actions restricted to the store owner
+ * (staff management, branches, billing, audit log, store settings). */
+export async function requireOwnerSession() {
+  const session = await getSession();
+  if (!session) return { session: null, user: null } as const;
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user || user.storeId !== session.storeId || !user.active || user.role !== "OWNER") {
+    return { session: null, user: null } as const;
+  }
+  return { session, user } as const;
 }

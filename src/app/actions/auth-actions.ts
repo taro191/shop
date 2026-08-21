@@ -70,6 +70,9 @@ export async function loginAction(_prevState: ActionState, formData: FormData): 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return { error: "เบอร์โทรศัพท์หรือรหัสผ่านไม่ถูกต้อง" };
   }
+  if (!user.active) {
+    return { error: "บัญชีนี้ถูกปิดใช้งานแล้ว กรุณาติดต่อเจ้าของร้าน" };
+  }
 
   await createSession({ userId: user.id, storeId: user.storeId });
   redirect("/dashboard");

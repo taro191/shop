@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 export type ActionState = { error?: string } | null;
 
@@ -46,6 +47,10 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
   if (products.length !== new Set(productIds).size) return { ok: false, error: "มีสินค้าบางรายการที่ไม่พบในระบบ" };
 
   const amount = parsed.data.lineItems.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  const branch = actingUser?.branchId
+    ? { id: actingUser.branchId }
+    : await prisma.branch.findFirst({ where: { storeId: session.storeId, isMain: true } });
 
   await prisma.$transaction(async (tx) => {
     await tx.purchaseBill.create({
@@ -56,6 +61,7 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
         amount,
         status: parsed.data.receivedNow ? "PENDING" : "ORDERED",
         receivedAt: parsed.data.receivedNow ? new Date() : null,
+        branchId: branch?.id ?? null,
         lineItems: {
           create: parsed.data.lineItems.map((l) => {
             const product = productMap.get(l.productId)!;
@@ -78,6 +84,15 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
         await tx.product.update({ where: { id: l.productId }, data: { quantity: { increment: l.quantity } } });
       }
     }
+  });
+
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: parsed.data.receivedNow ? "bill.create_received" : "bill.create_ordered",
+    entityType: "PurchaseBill",
+    summary: `${parsed.data.receivedNow ? "บันทึกบิลและรับสินค้า" : "สร้างใบสั่งซื้อ"} "${parsed.data.billNo}" (${supplier.name}) ฿${amount.toLocaleString()}`,
   });
 
   revalidatePath("/bills");
@@ -109,6 +124,17 @@ export async function receiveBillAction(billId: string): Promise<ActionState> {
     await tx.purchaseBill.update({ where: { id: bill.id }, data: { status: "PENDING", receivedAt: new Date() } });
   });
 
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "bill.receive",
+    entityType: "PurchaseBill",
+    entityId: bill.id,
+    summary: `รับสินค้าตามใบสั่งซื้อ "${bill.billNo}"`,
+  });
+
   revalidatePath("/bills");
   revalidatePath("/inventory");
   revalidatePath("/dashboard");
@@ -125,6 +151,17 @@ export async function markBillPaidAction(billId: string): Promise<ActionState> {
   if (bill.status === "ORDERED") return { error: "ต้องรับสินค้าก่อนจึงจะชำระเงินได้" };
 
   await prisma.purchaseBill.update({ where: { id: bill.id }, data: { status: "PAID" } });
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "bill.mark_paid",
+    entityType: "PurchaseBill",
+    entityId: bill.id,
+    summary: `ทำเครื่องหมายชำระแล้ว บิล "${bill.billNo}" ฿${bill.amount.toLocaleString()}`,
+  });
 
   revalidatePath("/bills");
   revalidatePath("/dashboard");

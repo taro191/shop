@@ -17,6 +17,7 @@ const checkoutSchema = z.object({
   method: z.enum(["CASH", "TRANSFER"]),
   customerId: z.string().min(1).optional(),
   pointsToRedeem: z.number().int().min(0).optional(),
+  branchId: z.string().min(1).optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
@@ -91,6 +92,14 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         }
       }
 
+      // Branch is optional (stores that haven't set up multi-branch just pass none).
+      let branchId: string | null = null;
+      if (parsed.data.branchId) {
+        const branch = await tx.branch.findFirst({ where: { id: parsed.data.branchId, storeId: session.storeId } });
+        if (!branch) throw new CheckoutError("ไม่พบสาขาที่เลือก");
+        branchId = branch.id;
+      }
+
       // Loyalty: validate the customer belongs to this store and cap redemption.
       let customer: { id: string; name: string; points: number } | null = null;
       if (parsed.data.customerId) {
@@ -125,6 +134,7 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
           pointsEarned,
           pointsRedeemed: discountAmount,
           discountAmount,
+          branchId,
           lineItems: { create: lineItemsData },
         },
       });

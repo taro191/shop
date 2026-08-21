@@ -206,6 +206,46 @@ export function PlusIcon(props: IconProps) {
   );
 }
 
+export function BadgeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <rect x="4" y="5" width="16" height="15" rx="2" />
+      <circle cx="12" cy="11" r="2.5" />
+      <path d="M8 17c0-1.7 1.8-3 4-3s4 1.3 4 3" />
+      <path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+    </svg>
+  );
+}
+
+export function MapPinIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M12 22s7-7.4 7-12.5A7 7 0 0 0 5 9.5C5 14.6 12 22 12 22z" />
+      <circle cx="12" cy="9.5" r="2.5" />
+    </svg>
+  );
+}
+
+export function CreditCardIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <rect x="2.5" y="5" width="19" height="14" rx="2" />
+      <path d="M2.5 10h19" />
+      <path d="M6 15h4" />
+    </svg>
+  );
+}
+
+export function HistoryIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 4v4h4" />
+      <path d="M12 8v4l3 2" />
+    </svg>
+  );
+}
+
 export function BarcodeIcon(props: IconProps) {
   return (
     <svg {...base} {...props} stroke="currentColor">

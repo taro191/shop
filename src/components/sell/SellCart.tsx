@@ -22,6 +22,7 @@ type ProductRow = {
 };
 
 type Customer = { id: string; name: string; phone: string; points: number };
+type Branch = { id: string; name: string };
 type CartLine = { productId: string; name: string; unit: string; sellPrice: number; stock: number; qty: number };
 type Receipt = Extract<CheckoutResult, { ok: true }>["receipt"];
 
@@ -30,11 +31,15 @@ export function SellCart({
   customers,
   storeName,
   promptPayId,
+  branches,
+  defaultBranchId,
 }: {
   products: ProductRow[];
   customers: Customer[];
   storeName: string;
   promptPayId: string | null;
+  branches: Branch[];
+  defaultBranchId: string | null;
 }) {
   const [mode, setMode] = useState<"type" | "scan">("type");
   const [query, setQuery] = useState("");
@@ -50,6 +55,7 @@ export function SellCart({
   const [customerQuery, setCustomerQuery] = useState("");
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [redeemInput, setRedeemInput] = useState("");
+  const [branchId, setBranchId] = useState<string | null>(defaultBranchId);
 
   const byBarcode = useMemo(() => {
     const map = new Map<string, ProductRow>();
@@ -146,6 +152,7 @@ export function SellCart({
         method,
         customerId: customer?.id,
         pointsToRedeem: discountAmount,
+        branchId: branchId ?? undefined,
       });
       if (result.ok) {
         setReceipt(result.receipt);
@@ -304,6 +311,23 @@ export function SellCart({
               <span className="font-display text-[15px] font-semibold text-foreground">ตะกร้าขาย</span>
               {totalQty > 0 && <span className="text-[12px] text-muted">{totalQty} ชิ้น</span>}
             </div>
+
+            {branches.length > 1 && !showQr && (
+              <div className="mb-3.5">
+                <label className="mb-1 block text-[11.5px] font-semibold text-muted">สาขาที่ขาย</label>
+                <select
+                  value={branchId ?? ""}
+                  onChange={(e) => setBranchId(e.target.value || null)}
+                  className="w-full rounded-[9px] border border-border px-3 py-2 text-[13px] outline-none focus:border-brand"
+                >
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {cartLines.length === 0 ? (
               <div className="py-8 text-center text-[13px] text-muted">ยังไม่มีสินค้าในตะกร้า</div>

@@ -12,12 +12,18 @@ import {
   UsersIcon,
   ClipboardCheckIcon,
   TagIcon,
+  BadgeIcon,
+  MapPinIcon,
+  CreditCardIcon,
+  HistoryIcon,
 } from "@/components/icons";
 
 export type NavItem = {
   href: string;
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
+  /** Only shown to the store owner — staff never see or can navigate to these. */
+  ownerOnly?: boolean;
 };
 
 /** Full navigation, shown in the desktop sidebar. */
@@ -32,6 +38,10 @@ export const SIDEBAR_ITEMS: NavItem[] = [
   { href: "/stock-take", label: "ตรวจนับสต๊อก", icon: ClipboardCheckIcon },
   { href: "/labels", label: "พิมพ์ป้ายราคา", icon: TagIcon },
   { href: "/reports", label: "รายงานสรุป", icon: ReportsIcon },
+  { href: "/staff", label: "จัดการพนักงาน", icon: BadgeIcon, ownerOnly: true },
+  { href: "/branches", label: "สาขา", icon: MapPinIcon, ownerOnly: true },
+  { href: "/billing", label: "แพ็กเกจและการเรียกเก็บเงิน", icon: CreditCardIcon, ownerOnly: true },
+  { href: "/audit-log", label: "ประวัติการใช้งาน", icon: HistoryIcon, ownerOnly: true },
 ];
 
 /** Daily-operation items, shown in the mobile bottom tab bar. */

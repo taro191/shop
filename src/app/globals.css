@@ -56,7 +56,9 @@ body {
   #receipt-print,
   #receipt-print *,
   #labels-print,
-  #labels-print * {
+  #labels-print *,
+  #report-print,
+  #report-print * {
     visibility: visible;
   }
   #receipt-print {
@@ -69,6 +71,10 @@ body {
     padding: 12px !important;
   }
   #labels-print {
+    position: absolute;
+    inset: 0;
+  }
+  #report-print {
     position: absolute;
     inset: 0;
   }

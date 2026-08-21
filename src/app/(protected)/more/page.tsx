@@ -13,6 +13,10 @@ import {
   UsersIcon,
   ClipboardCheckIcon,
   TagIcon,
+  BadgeIcon,
+  MapPinIcon,
+  CreditCardIcon,
+  HistoryIcon,
   ChevronRightIcon,
 } from "@/components/icons";
 
@@ -24,6 +28,13 @@ const DESKTOP_LINKS = [
   { href: "/stock-take", label: "ตรวจนับสต๊อก", desc: "เทียบยอดจริงกับระบบ", icon: ClipboardCheckIcon },
   { href: "/labels", label: "พิมพ์ป้ายราคา", desc: "ป้ายราคาพร้อมบาร์โค้ด", icon: TagIcon },
   { href: "/reports", label: "รายงานสรุปซื้อขาย", desc: "รายวัน รายเดือน รายไตรมาส", icon: ReportsIcon },
+];
+
+const OWNER_LINKS = [
+  { href: "/staff", label: "จัดการพนักงาน", desc: "เพิ่มบัญชี กำหนดสิทธิ์ ผูกสาขา", icon: BadgeIcon },
+  { href: "/branches", label: "สาขา", desc: "เปิด/ปิดสาขา", icon: MapPinIcon },
+  { href: "/billing", label: "แพ็กเกจและการเรียกเก็บเงิน", desc: "ดูสิทธิ์การใช้งาน เปลี่ยนแพ็กเกจ", icon: CreditCardIcon },
+  { href: "/audit-log", label: "ประวัติการใช้งาน", desc: "ใครแก้ไขอะไร เมื่อไหร่", icon: HistoryIcon },
 ];
 
 export default async function MorePage() {
@@ -72,6 +83,30 @@ export default async function MorePage() {
         </div>
       </div>
 
+      {user.role === "OWNER" && (
+        <div className="px-5 pt-6 sm:px-8">
+          <div className="mb-2.5 px-0.5 text-xs font-semibold text-muted">สำหรับเจ้าของร้าน</div>
+          <div className="overflow-hidden rounded-2xl border border-border bg-white">
+            {OWNER_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-3 border-b border-border px-4 py-3.5 last:border-none"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-accent-tint">
+                  <item.icon className="h-[18px] w-[18px] text-accent-dark" />
+                </div>
+                <div className="flex-grow">
+                  <div className="text-[13.5px] font-medium text-foreground">{item.label}</div>
+                  <div className="mt-0.5 text-[11px] text-muted">{item.desc}</div>
+                </div>
+                <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="px-5 pt-6 sm:px-8">
         <div className="mb-2.5 px-0.5 text-xs font-semibold text-muted">บัญชี</div>
         <div className="overflow-hidden rounded-2xl border border-border bg-white">
@@ -81,16 +116,18 @@ export default async function MorePage() {
               <div className="mt-0.5 text-[11px] text-muted">{user.role === "OWNER" ? "เจ้าของร้าน" : "พนักงาน"} · {user.phone}</div>
             </div>
           </div>
-          <Link href="/settings" className="flex items-center gap-3 border-b border-border px-4 py-3.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-brand-light">
-              <GearIcon className="h-[18px] w-[18px] text-brand" />
-            </div>
-            <div className="flex-grow">
-              <div className="text-[13.5px] font-medium text-foreground">ข้อมูลร้านค้า</div>
-              <div className="mt-0.5 text-[11px] text-muted">ชื่อร้าน และ QR พร้อมเพย์รับเงิน</div>
-            </div>
-            <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted" />
-          </Link>
+          {user.role === "OWNER" && (
+            <Link href="/settings" className="flex items-center gap-3 border-b border-border px-4 py-3.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-brand-light">
+                <GearIcon className="h-[18px] w-[18px] text-brand" />
+              </div>
+              <div className="flex-grow">
+                <div className="text-[13.5px] font-medium text-foreground">ข้อมูลร้านค้า</div>
+                <div className="mt-0.5 text-[11px] text-muted">ชื่อร้าน และ QR พร้อมเพย์รับเงิน</div>
+              </div>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted" />
+            </Link>
+          )}
           <form action={logoutAction}>
             <button type="submit" className="flex w-full items-center gap-3 px-4 py-3.5 text-left">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-danger-light">

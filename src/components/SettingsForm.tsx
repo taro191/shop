@@ -3,7 +3,15 @@
 import { useActionState } from "react";
 import { updateStoreSettings, type ActionState } from "@/app/(protected)/settings/actions";
 
-export function SettingsForm({ storeName, promptPayId }: { storeName: string; promptPayId: string }) {
+export function SettingsForm({
+  storeName,
+  promptPayId,
+  notifyWebhookUrl,
+}: {
+  storeName: string;
+  promptPayId: string;
+  notifyWebhookUrl: string;
+}) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(updateStoreSettings, null);
 
   return (
@@ -34,6 +42,21 @@ export function SettingsForm({ storeName, promptPayId }: { storeName: string; pr
         />
         <p className="mt-1.5 text-[11.5px] text-muted">
           ใช้แสดง QR ให้ลูกค้าสแกนโอนเงินตอนขายสินค้า เป็น QR แบบคงที่ ระบบตรวจสอบยอดชำระอัตโนมัติไม่ได้ พนักงานต้องกดยืนยันเองว่าลูกค้าโอนแล้ว
+        </p>
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">Webhook แจ้งเตือน (ไม่บังคับ)</label>
+        <input
+          name="notifyWebhookUrl"
+          type="url"
+          defaultValue={notifyWebhookUrl}
+          placeholder="https://..."
+          className="w-full rounded-[10px] border border-border px-3.5 py-3 text-sm outline-none focus:border-brand"
+        />
+        <p className="mt-1.5 text-[11.5px] text-muted">
+          ระบบยังไม่ได้เชื่อมต่อ LINE หรืออีเมลของตัวเอง — ใส่ URL ปลายทางของคุณเอง (เช่น Discord/Slack incoming webhook หรือบริการเชื่อมต่อ LINE
+          ที่คุณตั้งไว้) ระบบจะส่งข้อมูลแจ้งเตือนสต๊อกต่ำ/บิลค้างชำระเป็น JSON ไปที่ URL นี้เมื่อกดปุ่มแจ้งเตือนจากหน้าแดชบอร์ด
         </p>
       </div>
 

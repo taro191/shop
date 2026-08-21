@@ -10,13 +10,16 @@ export function Sidebar({
   storeName,
   plan,
   ownerName,
+  isOwner,
 }: {
   storeName: string;
   plan: string;
   ownerName: string;
+  isOwner: boolean;
 }) {
   const pathname = usePathname();
   const initials = ownerName.trim().slice(0, 2) || "ร้าน";
+  const items = SIDEBAR_ITEMS.filter((item) => isOwner || !item.ownerOnly);
 
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto bg-brand-dark text-white/90 md:flex">
@@ -41,7 +44,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex flex-grow flex-col gap-0.5 px-3">
-        {SIDEBAR_ITEMS.map((item) => {
+        {items.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
@@ -67,7 +70,7 @@ export function Sidebar({
         </div>
         <div className="min-w-0 flex-grow leading-tight">
           <div className="truncate text-[12.5px] font-semibold text-white">{ownerName}</div>
-          <div className="text-[11px] text-white/60">เจ้าของร้าน</div>
+          <div className="text-[11px] text-white/60">{isOwner ? "เจ้าของร้าน" : "พนักงาน"}</div>
         </div>
         <form action={logoutAction}>
           <button

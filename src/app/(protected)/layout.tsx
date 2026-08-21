@@ -9,7 +9,7 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   if (!user) redirect("/login");
 
   return (
-    <AppShell storeName={user.store.name} plan={planLabel(user.store.plan)} ownerName={user.name}>
+    <AppShell storeName={user.store.name} plan={planLabel(user.store.plan)} ownerName={user.name} isOwner={user.role === "OWNER"}>
       {children}
     </AppShell>
   );

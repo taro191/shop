@@ -6,6 +6,7 @@ import { StatTile } from "@/components/ui/StatTile";
 import { formatBaht, formatThaiDate, formatThaiTime } from "@/lib/format";
 import { expiryStatus } from "@/lib/status";
 import { IncomeIcon, InventoryIcon, BillsIcon } from "@/components/icons";
+import { NotifyButton } from "@/components/dashboard/NotifyButton";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -75,7 +76,10 @@ export default async function DashboardPage() {
         </div>
 
         <div className="rounded-2xl border border-border bg-white p-5">
-          <div className="mb-3.5 font-display text-[15px] font-semibold text-foreground">สินค้าใกล้หมดสต๊อก</div>
+          <div className="mb-3.5 flex items-center justify-between gap-2">
+            <span className="font-display text-[15px] font-semibold text-foreground">สินค้าใกล้หมดสต๊อก</span>
+            {user.role === "OWNER" && <NotifyButton />}
+          </div>
           {lowStock.length === 0 && <div className="py-6 text-center text-[13px] text-muted">สต๊อกสินค้าอยู่ในระดับปกติ</div>}
           <div className="flex flex-col">
             {lowStock.map((p) => (

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 const schema = z.object({
   reason: z.string().trim().optional(),
@@ -45,6 +46,15 @@ export async function submitStockTake(input: StockTakeInput): Promise<StockTakeR
       });
       await tx.product.update({ where: { id: a.productId }, data: { quantity: a.actualQty } });
     }
+  });
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "stock.adjust",
+    summary: `ตรวจนับสต๊อก ปรับปรุง ${toApply.length} รายการ${parsed.data.reason ? ` (${parsed.data.reason})` : ""}`,
   });
 
   revalidatePath("/stock-take");

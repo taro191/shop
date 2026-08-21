@@ -101,8 +101,9 @@ function emptyBucket(): ReportBucket {
  * where available, and the portion still missing it (older/manual quick-sale entries
  * with no line items) — the caller blends that remainder with the estimated margin
  * ratio from getAverageMarginRatio. */
-export async function getReportRows(storeId: string, period: ReportPeriod) {
+export async function getReportRows(storeId: string, period: ReportPeriod, branchId?: string) {
   const now = new Date();
+  const branchFilter = branchId ? { branchId } : {};
 
   const applyTxn = (bucket: ReportBucket, t: { amount: number; lineItems: { unitCost: number; quantity: number }[] }) => {
     bucket.sales += t.amount;
@@ -118,7 +119,7 @@ export async function getReportRows(storeId: string, period: ReportPeriod) {
   if (period === "daily") {
     const start = startOfDay(addDays(now, -6));
     const end = endOfDay(now);
-    const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end } }, select });
+    const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end }, ...branchFilter }, select });
     const buckets = new Map<string, ReportBucket>();
     for (let i = 0; i < 7; i++) buckets.set(dateKey(addDays(start, i)), emptyBucket());
     for (const t of txns) {
@@ -135,7 +136,7 @@ export async function getReportRows(storeId: string, period: ReportPeriod) {
     const year = now.getFullYear();
     const start = new Date(year, 0, 1);
     const end = endOfDay(now);
-    const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end } }, select });
+    const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end }, ...branchFilter }, select });
     const months = now.getMonth() + 1;
     const rows = Array.from({ length: months }, (_, i) => ({ label: monthLabel.format(new Date(year, i, 1)), ...emptyBucket() }));
     for (const t of txns) applyTxn(rows[t.soldAt.getMonth()], t);
@@ -146,7 +147,7 @@ export async function getReportRows(storeId: string, period: ReportPeriod) {
   const year = now.getFullYear();
   const start = new Date(year, 0, 1);
   const end = endOfDay(now);
-  const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end } }, select });
+  const txns = await prisma.incomeTransaction.findMany({ where: { storeId, soldAt: { gte: start, lte: end }, ...branchFilter }, select });
   const currentQuarter = Math.floor(now.getMonth() / 3);
   const rows = Array.from({ length: currentQuarter + 1 }, (_, i) => ({ label: `ไตรมาส ${i + 1}`, ...emptyBucket() }));
   for (const t of txns) applyTxn(rows[Math.floor(t.soldAt.getMonth() / 3)], t);

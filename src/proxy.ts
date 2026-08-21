@@ -15,6 +15,10 @@ const PROTECTED_PREFIXES = [
   "/customers",
   "/stock-take",
   "/labels",
+  "/staff",
+  "/branches",
+  "/billing",
+  "/audit-log",
 ];
 
 const AUTH_ONLY_PATHS = ["/login"];
