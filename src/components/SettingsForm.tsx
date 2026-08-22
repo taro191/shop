@@ -1,18 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { updateStoreSettings, type ActionState } from "@/app/(protected)/settings/actions";
 
 export function SettingsForm({
   storeName,
   promptPayId,
   notifyWebhookUrl,
+  vatRegistered,
+  taxId,
 }: {
   storeName: string;
   promptPayId: string;
   notifyWebhookUrl: string;
+  vatRegistered: boolean;
+  taxId: string;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(updateStoreSettings, null);
+  const [vatOn, setVatOn] = useState(vatRegistered);
 
   return (
     <form action={formAction} className="flex flex-col gap-4 rounded-2xl border border-border bg-white p-6">
@@ -43,6 +48,36 @@ export function SettingsForm({
         <p className="mt-1.5 text-[11.5px] text-muted">
           ใช้แสดง QR ให้ลูกค้าสแกนโอนเงินตอนขายสินค้า เป็น QR แบบคงที่ ระบบตรวจสอบยอดชำระอัตโนมัติไม่ได้ พนักงานต้องกดยืนยันเองว่าลูกค้าโอนแล้ว
         </p>
+      </div>
+
+      <div className="rounded-[10px] border border-border p-3.5">
+        <label className="flex items-center gap-2.5 text-[13.5px] font-medium text-foreground">
+          <input
+            type="checkbox"
+            name="vatRegistered"
+            checked={vatOn}
+            onChange={(e) => setVatOn(e.target.checked)}
+            className="h-4 w-4 accent-brand"
+          />
+          จดทะเบียนภาษีมูลค่าเพิ่ม (VAT)
+        </label>
+        <p className="mt-1.5 text-[11.5px] text-muted">
+          เมื่อเปิด ใบเสร็จจากหน้าขายสินค้าจะกลายเป็นใบกำกับภาษีอย่างย่อ (เลขที่ใบกำกับภาษีรันต่อเนื่องอัตโนมัติ ไม่ซ้ำ) พร้อมแสดงเลขประจำตัวผู้เสียภาษีของร้าน
+        </p>
+        {vatOn && (
+          <div className="mt-3">
+            <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">เลขประจำตัวผู้เสียภาษี (13 หลัก)</label>
+            <input
+              name="taxId"
+              type="text"
+              defaultValue={taxId}
+              placeholder="เช่น 1234567890123"
+              inputMode="numeric"
+              maxLength={13}
+              className="w-full rounded-[10px] border border-border px-3.5 py-3 text-sm outline-none focus:border-brand"
+            />
+          </div>
+        )}
       </div>
 
       <div>

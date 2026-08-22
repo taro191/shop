@@ -13,6 +13,8 @@ const schema = z.object({
   name: z.string().trim().min(1, "กรุณากรอกชื่อร้านค้า"),
   promptPayId: z.string().trim().optional(),
   notifyWebhookUrl: z.string().trim().optional(),
+  vatRegistered: z.boolean(),
+  taxId: z.string().trim().optional(),
 });
 
 export async function updateStoreSettings(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -23,9 +25,20 @@ export async function updateStoreSettings(_prevState: ActionState, formData: For
     name: formData.get("name"),
     promptPayId: formData.get("promptPayId") || undefined,
     notifyWebhookUrl: formData.get("notifyWebhookUrl") || undefined,
+    vatRegistered: formData.get("vatRegistered") === "on",
+    taxId: formData.get("taxId") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+  }
+
+  let taxId: string | null = null;
+  if (parsed.data.vatRegistered) {
+    const rawTaxId = (parsed.data.taxId ?? "").replace(/[^0-9]/g, "");
+    if (rawTaxId.length !== 13) {
+      return { error: "เลขประจำตัวผู้เสียภาษีต้องมี 13 หลัก (จำเป็นเมื่อจดทะเบียน VAT)" };
+    }
+    taxId = rawTaxId;
   }
 
   const rawPromptPay = parsed.data.promptPayId?.trim();
@@ -44,7 +57,13 @@ export async function updateStoreSettings(_prevState: ActionState, formData: For
 
   await prisma.store.update({
     where: { id: session.storeId },
-    data: { name: parsed.data.name, promptPayId, notifyWebhookUrl: rawWebhook || null },
+    data: {
+      name: parsed.data.name,
+      promptPayId,
+      notifyWebhookUrl: rawWebhook || null,
+      vatRegistered: parsed.data.vatRegistered,
+      taxId,
+    },
   });
 
   await logAudit({

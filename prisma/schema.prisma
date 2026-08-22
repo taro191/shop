@@ -43,6 +43,17 @@ model Store {
   /// points at their own service — this app has no vendor credentials of its own to
   /// send LINE/email notifications directly, so it POSTs a JSON payload here instead.
   notifyWebhookUrl String?
+  /// Whether this store is VAT-registered. Toggles checkout receipts between a plain
+  /// ใบเสร็จรับเงิน and an ใบกำกับภาษีอย่างย่อ (abbreviated tax invoice) — the standard
+  /// retail-POS format under Thai law — with a running invoice number and tax ID.
+  vatRegistered Boolean @default(false)
+  /// 13-digit เลขประจำตัวผู้เสียภาษี. Required (validated in the settings action) when
+  /// vatRegistered is true; otherwise unused.
+  taxId         String?
+  /// Next abbreviated-tax-invoice number to assign. Must run sequentially with no gaps
+  /// per Thai tax law — incremented atomically at checkout time, never reused even if
+  /// vatRegistered is later toggled off and back on.
+  nextInvoiceNo Int      @default(1)
   createdAt   DateTime @default(now())
 
   users            User[]
@@ -187,6 +198,10 @@ model IncomeTransaction {
   discountAmount Float         @default(0)
   branchId       String?
   branch         Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  /// Set only when the store was VAT-registered at the moment of this sale — the
+  /// sequential number printed on its ใบกำกับภาษีอย่างย่อ. Null for stores not
+  /// VAT-registered (plain receipt, no invoice numbering required).
+  invoiceNo      Int?
   soldAt         DateTime      @default(now())
 
   lineItems SaleLineItem[]

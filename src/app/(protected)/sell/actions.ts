@@ -33,6 +33,8 @@ export type CheckoutResult =
         pointsEarned: number;
         pointsRedeemed: number;
         customerName: string | null;
+        invoiceNo: number | null;
+        taxId: string | null;
       } }
   | { ok: false; error: string };
 
@@ -92,6 +94,22 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         }
       }
 
+      // VAT-registered stores get a sequential, gap-free tax-invoice number per Thai
+      // law. The update happens first so Postgres's row lock on Store serializes
+      // concurrent checkouts — the returned post-increment value minus one is this
+      // sale's number, and no two sales can ever get the same one.
+      let invoiceNo: number | null = null;
+      let taxId: string | null = null;
+      const store = await tx.store.findUnique({ where: { id: session.storeId }, select: { vatRegistered: true, taxId: true } });
+      if (store?.vatRegistered) {
+        const updatedStore = await tx.store.update({
+          where: { id: session.storeId },
+          data: { nextInvoiceNo: { increment: 1 } },
+        });
+        invoiceNo = updatedStore.nextInvoiceNo - 1;
+        taxId = store.taxId;
+      }
+
       // Branch is optional (stores that haven't set up multi-branch just pass none).
       let branchId: string | null = null;
       if (parsed.data.branchId) {
@@ -135,6 +153,7 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
           pointsRedeemed: discountAmount,
           discountAmount,
           branchId,
+          invoiceNo,
           lineItems: { create: lineItemsData },
         },
       });
@@ -149,6 +168,8 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         pointsEarned,
         pointsRedeemed: discountAmount,
         customerName: customer?.name ?? null,
+        invoiceNo,
+        taxId,
       };
     });
 
@@ -172,6 +193,8 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         pointsEarned: transaction.pointsEarned,
         pointsRedeemed: transaction.pointsRedeemed,
         customerName: transaction.customerName,
+        invoiceNo: transaction.invoiceNo,
+        taxId: transaction.taxId,
       },
     };
   } catch (e) {

@@ -180,9 +180,15 @@ export function SellCart({
             <CheckCircleIcon className="h-7 w-7" strokeWidth={2} />
           </div>
           <div className="hidden font-display text-base font-semibold text-foreground print:block">{storeName}</div>
-          <div className="mb-1 font-display text-lg font-semibold text-foreground">ใบเสร็จรับเงิน</div>
+          {receipt.invoiceNo != null && (
+            <div className="text-[11.5px] text-muted">เลขประจำตัวผู้เสียภาษี {receipt.taxId}</div>
+          )}
+          <div className="mb-1 font-display text-lg font-semibold text-foreground">
+            {receipt.invoiceNo != null ? "ใบกำกับภาษีอย่างย่อ" : "ใบเสร็จรับเงิน"}
+          </div>
           <div className="mb-5 text-[12.5px] text-muted">
-            {formatThaiDate(new Date(receipt.soldAt))} · {formatThaiTime(new Date(receipt.soldAt))} · เลขที่ {receipt.id.slice(-8).toUpperCase()}
+            {formatThaiDate(new Date(receipt.soldAt))} · {formatThaiTime(new Date(receipt.soldAt))} ·{" "}
+            {receipt.invoiceNo != null ? `เลขที่ ${String(receipt.invoiceNo).padStart(6, "0")}` : `เลขที่ ${receipt.id.slice(-8).toUpperCase()}`}
             {receipt.customerName ? ` · ${receipt.customerName}` : ""}
           </div>
 
@@ -207,6 +213,12 @@ export function SellCart({
             </div>
             <div className="text-[11.5px] text-muted">ชำระโดย {receipt.method === "CASH" ? "เงินสด" : "เงินโอน / QR"}</div>
             {receipt.pointsEarned > 0 && <div className="text-[11.5px] text-brand">ได้รับ {receipt.pointsEarned} แต้มสะสม</div>}
+            {receipt.invoiceNo != null && (
+              <div className="text-[11.5px] text-muted">
+                ราคารวมภาษีมูลค่าเพิ่มแล้ว (มูลค่าสินค้า ฿{formatBaht((receipt.amount * 100) / 107)} + VAT 7% ฿
+                {formatBaht(receipt.amount - (receipt.amount * 100) / 107)})
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2.5 print:hidden">

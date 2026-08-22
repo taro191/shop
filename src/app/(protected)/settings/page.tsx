@@ -16,6 +16,8 @@ export default async function SettingsPage() {
           storeName={user.store.name}
           promptPayId={user.store.promptPayId ?? ""}
           notifyWebhookUrl={user.store.notifyWebhookUrl ?? ""}
+          vatRegistered={user.store.vatRegistered}
+          taxId={user.store.taxId ?? ""}
         />
       </div>
     </div>
