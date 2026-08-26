@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/session-token";
+import { isMobileUserAgent } from "@/lib/device";
 
 const PROTECTED_PREFIXES = [
   "/dashboard",
@@ -19,6 +20,8 @@ const PROTECTED_PREFIXES = [
   "/branches",
   "/billing",
   "/audit-log",
+  "/cashflow",
+  "/write-off",
 ];
 
 const AUTH_ONLY_PATHS = ["/login"];
@@ -38,6 +41,12 @@ export async function proxy(request: NextRequest) {
   const isAuthOnly = AUTH_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   if (isAuthOnly && session) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // Phones land on the mobile hub (product search + quick actions) instead of the
+  // analytics dashboard — every time, not just right after login, per spec.
+  if (pathname === "/dashboard" && session && isMobileUserAgent(request.headers.get("user-agent"))) {
+    return NextResponse.redirect(new URL("/search", request.url));
   }
 
   return NextResponse.next();

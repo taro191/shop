@@ -16,6 +16,8 @@ import {
   MapPinIcon,
   CreditCardIcon,
   HistoryIcon,
+  WalletIcon,
+  AlertTriangleIcon,
 } from "@/components/icons";
 
 export type NavItem = {
@@ -33,9 +35,11 @@ export const SIDEBAR_ITEMS: NavItem[] = [
   { href: "/inventory", label: "คลังสินค้า", icon: InventoryIcon },
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", icon: CompareIcon },
   { href: "/income", label: "รายรับรายวัน", icon: IncomeIcon },
+  { href: "/cashflow", label: "รายรับ-รายจ่ายทั่วไป", icon: WalletIcon },
   { href: "/bills", label: "บิลซื้อสินค้า", icon: BillsIcon },
   { href: "/customers", label: "ลูกค้า / สมาชิก", icon: UsersIcon },
   { href: "/stock-take", label: "ตรวจนับสต๊อก", icon: ClipboardCheckIcon },
+  { href: "/write-off", label: "สินค้าหมดอายุ / ชำรุด", icon: AlertTriangleIcon },
   { href: "/labels", label: "พิมพ์ป้ายราคา", icon: TagIcon },
   { href: "/reports", label: "รายงานสรุป", icon: ReportsIcon },
   { href: "/staff", label: "จัดการพนักงาน", icon: BadgeIcon, ownerOnly: true },

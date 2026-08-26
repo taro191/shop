@@ -33,6 +33,11 @@ enum LoyaltyEntryType {
   REDEEM
 }
 
+enum CashFlowType {
+  INCOME
+  EXPENSE
+}
+
 model Store {
   id          String   @id @default(cuid())
   name        String
@@ -65,6 +70,27 @@ model Store {
   stockAdjustments StockAdjustment[]
   branches         Branch[]
   auditLogs        AuditLog[]
+  cashEntries      CashEntry[]
+}
+
+/** General cash-in/cash-out ledger — separate from IncomeTransaction (POS sales)
+ * and PurchaseBill (supplier purchases). Covers everything else: utility bills,
+ * rent, wages, and one-off miscellaneous income, mainly entered from the mobile
+ * quick-action hub. */
+model CashEntry {
+  id         String       @id @default(cuid())
+  storeId    String
+  store      Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  type       CashFlowType
+  category   String
+  amount     Float
+  note       String?
+  branchId   String?
+  branch     Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  recordedAt DateTime     @default(now())
+
+  @@index([storeId, recordedAt])
+  @@index([branchId])
 }
 
 model User {
@@ -104,6 +130,7 @@ model Branch {
   users        User[]
   transactions IncomeTransaction[]
   bills        PurchaseBill[]
+  cashEntries  CashEntry[]
 
   @@index([storeId])
 }

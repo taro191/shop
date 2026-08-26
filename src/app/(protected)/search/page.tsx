@@ -7,6 +7,13 @@ import { LiveSearchBox } from "@/components/LiveSearchBox";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { productStockStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
+import { WalletIcon, ClipboardCheckIcon, AlertTriangleIcon } from "@/components/icons";
+
+const QUICK_ACTIONS = [
+  { href: "/cashflow", label: "รายรับ-รายจ่าย", icon: WalletIcon, iconClass: "text-brand" },
+  { href: "/stock-take", label: "ปรับสตอก", icon: ClipboardCheckIcon, iconClass: "text-brand" },
+  { href: "/write-off", label: "หมดอายุ/ชำรุด", icon: AlertTriangleIcon, iconClass: "text-danger" },
+];
 
 export default async function SearchPage({ searchParams }: PageProps<"/search">) {
   const user = await getCurrentUser();
@@ -35,6 +42,21 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   return (
     <div className="mx-auto max-w-[520px] pb-10">
       <PageHeader title="เช็คราคาสินค้า" subtitle="พิมพ์ชื่อหรือสแกนบาร์โค้ดเพื่อดูราคาล่าสุด" />
+
+      <div className="px-5 pt-4 sm:px-8">
+        <div className="grid grid-cols-3 gap-2">
+          {QUICK_ACTIONS.map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="flex flex-col items-center gap-1.5 rounded-[12px] border border-border bg-white px-2 py-3 text-center"
+            >
+              <a.icon className={`h-5 w-5 ${a.iconClass}`} />
+              <span className="text-[11px] font-medium leading-tight text-foreground/80">{a.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       <div className="px-5 pt-4 sm:px-8">
         <div className="flex rounded-[11px] bg-[oklch(0.94_0.004_90)] p-[3px]">
@@ -84,30 +106,62 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
               </div>
             )}
 
-            <div className="flex flex-col gap-2.5">
-              {products.map((p) => {
-                const status = productStockStatus(p.quantity);
-                return (
-                  <div key={p.id} className="flex items-center justify-between gap-3 rounded-[14px] border border-border bg-white px-4 py-3.5">
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-semibold text-foreground">{p.name}</div>
-                      <div className="mt-0.5 text-[11.5px] text-muted">
-                        {p.category} · หน่วยละ{p.unit}
-                      </div>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <div className="font-display text-lg font-bold text-foreground">฿{formatBaht(p.sellPrice)}</div>
-                      <div className={`mt-0.5 rounded-md px-2 py-0.5 text-[10.5px] font-semibold ${status.className}`}>
-                        {status.text}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              {q && products.length === 0 && (
-                <div className="py-10 text-center text-[13px] text-muted">ไม่พบสินค้าที่ค้นหา</div>
-              )}
-            </div>
+            {products.length > 0 && (
+              <div className="overflow-x-auto rounded-[14px] border border-border bg-white">
+                <table className="w-full text-[13px]">
+                  <thead>
+                    <tr className="border-b border-border text-left text-[10.5px] text-muted">
+                      <th className="px-3.5 py-2.5 font-semibold">สินค้า</th>
+                      <th className="px-3.5 py-2.5 text-right font-semibold">ราคา</th>
+                      <th className="px-3.5 py-2.5 text-right font-semibold">คงเหลือ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((p) => {
+                      const status = productStockStatus(p.quantity);
+                      return (
+                        <tr key={p.id} className="border-b border-border last:border-none">
+                          <td className="px-3.5 py-2.5">
+                            <div className="font-medium text-foreground">{p.name}</div>
+                            <div className="text-[11px] text-muted">
+                              {p.category} · หน่วยละ{p.unit}
+                            </div>
+                          </td>
+                          <td className="px-3.5 py-2.5 text-right font-semibold text-foreground">฿{formatBaht(p.sellPrice)}</td>
+                          <td className="px-3.5 py-2.5 text-right">
+                            <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold ${status.className}`}>
+                              {p.quantity} {p.unit}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {q && products.length === 0 && (
+              <div className="flex flex-col items-center gap-3 rounded-[14px] border border-dashed border-border bg-white px-5 py-8 text-center">
+                <div className="text-[13px] text-muted">ไม่พบสินค้า &ldquo;{q}&rdquo; ในระบบ</div>
+                <div className="flex w-full flex-col gap-2">
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(q)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-[10px] border border-border py-2.5 text-[13px] font-semibold text-foreground/75"
+                  >
+                    ค้นหาใน Google
+                  </a>
+                  <Link
+                    href={`/inventory?new=${encodeURIComponent(q)}`}
+                    className="rounded-[10px] bg-brand py-2.5 text-center text-[13px] font-semibold text-white"
+                  >
+                    + เพิ่ม &ldquo;{q}&rdquo; เป็นสินค้าใหม่
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <BarcodeScanner />

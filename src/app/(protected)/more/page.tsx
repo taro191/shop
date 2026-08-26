@@ -17,6 +17,8 @@ import {
   MapPinIcon,
   CreditCardIcon,
   HistoryIcon,
+  WalletIcon,
+  AlertTriangleIcon,
   ChevronRightIcon,
 } from "@/components/icons";
 
@@ -25,7 +27,9 @@ const DESKTOP_LINKS = [
   { href: "/inventory", label: "คลังสินค้า", desc: "จัดการสต๊อกและราคาสินค้า", icon: InventoryIcon },
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", desc: "หาต้นทุนที่ถูกที่สุด", icon: CompareIcon },
   { href: "/customers", label: "ลูกค้า / สมาชิก", desc: "รายชื่อลูกค้าและแต้มสะสม", icon: UsersIcon },
+  { href: "/cashflow", label: "รายรับ-รายจ่ายทั่วไป", desc: "ค่าน้ำ ค่าไฟ ค่าเช่า และรายรับ-จ่ายอื่นๆ", icon: WalletIcon },
   { href: "/stock-take", label: "ตรวจนับสต๊อก", desc: "เทียบยอดจริงกับระบบ", icon: ClipboardCheckIcon },
+  { href: "/write-off", label: "สินค้าหมดอายุ / ชำรุด", desc: "ตัดสต๊อกสินค้าที่ขายไม่ได้", icon: AlertTriangleIcon },
   { href: "/labels", label: "พิมพ์ป้ายราคา", desc: "ป้ายราคาพร้อมบาร์โค้ด", icon: TagIcon },
   { href: "/reports", label: "รายงานสรุปซื้อขาย", desc: "รายวัน รายเดือน รายไตรมาส", icon: ReportsIcon },
 ];

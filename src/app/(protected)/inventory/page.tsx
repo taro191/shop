@@ -19,6 +19,7 @@ export default async function InventoryPage({
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
   const category = typeof params.category === "string" ? params.category : "ทั้งหมด";
+  const prefillName = typeof params.new === "string" ? params.new : "";
 
   const products = await prisma.product.findMany({
     where: {
@@ -44,8 +45,8 @@ export default async function InventoryPage({
             <Link href="/stock-take" className="rounded-[10px] border border-border px-4 py-2.5 text-[13px] font-semibold text-foreground/70">
               ตรวจนับสต๊อก
             </Link>
-            <SlideOver triggerLabel="เพิ่มสินค้าใหม่" title="เพิ่มสินค้าใหม่" action={addProductAction}>
-              <Field label="ชื่อสินค้า" name="name" placeholder="เช่น น้ำปลาตราปลาหมึก 700ml" required />
+            <SlideOver triggerLabel="เพิ่มสินค้าใหม่" title="เพิ่มสินค้าใหม่" action={addProductAction} initialOpen={!!prefillName}>
+              <Field label="ชื่อสินค้า" name="name" placeholder="เช่น น้ำปลาตราปลาหมึก 700ml" defaultValue={prefillName} required />
               <SelectField label="หมวดหมู่" name="category" options={PRODUCT_CATEGORIES} />
               <div className="grid grid-cols-2 gap-3">
                 <Field label="ราคาทุน (บาท)" name="costPrice" type="number" placeholder="0" required />

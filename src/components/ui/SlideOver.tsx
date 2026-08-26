@@ -11,13 +11,17 @@ export function SlideOver({
   title,
   action,
   children,
+  initialOpen = false,
 }: {
   triggerLabel: string;
   title: string;
   action: Action;
   children: ReactNode;
+  /** Opens the panel immediately on mount — e.g. arriving from the mobile hub's
+   * "product not found, add it" shortcut with a prefilled name field. */
+  initialOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [formKey, setFormKey] = useState(0);
 
   return (
