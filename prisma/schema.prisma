@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 enum Role {
@@ -47,7 +47,7 @@ model Store {
   /// Generic outgoing webhook (Discord/Slack/LINE Messaging API relay/etc.) the owner
   /// points at their own service — this app has no vendor credentials of its own to
   /// send LINE/email notifications directly, so it POSTs a JSON payload here instead.
-  notifyWebhookUrl String?
+  notifyWebhookUrl String? @db.Text
   /// Whether this store is VAT-registered. Toggles checkout receipts between a plain
   /// ใบเสร็จรับเงิน and an ใบกำกับภาษีอย่างย่อ (abbreviated tax invoice) — the standard
   /// retail-POS format under Thai law — with a running invoice number and tax ID.
@@ -84,7 +84,7 @@ model CashEntry {
   type       CashFlowType
   category   String
   amount     Float
-  note       String?
+  note       String?  @db.Text
   branchId   String?
   branch     Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
   recordedAt DateTime     @default(now())
@@ -121,7 +121,7 @@ model Branch {
   storeId   String
   store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   name      String
-  address   String?
+  address   String?   @db.Text
   /// The branch auto-created at signup. Kept around as the fallback branch for
   /// stores that never explicitly set up multi-branch.
   isMain    Boolean  @default(false)
@@ -149,7 +149,7 @@ model AuditLog {
   action     String
   entityType String?
   entityId   String?
-  summary    String
+  summary    String   @db.Text
   createdAt  DateTime @default(now())
 
   @@index([storeId, createdAt])
@@ -215,7 +215,7 @@ model IncomeTransaction {
   id             String        @id @default(cuid())
   storeId        String
   store          Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  items          String
+  items          String        @db.Text
   method         PaymentMethod
   amount         Float
   customerId     String?
@@ -262,7 +262,7 @@ model LoyaltyEntry {
   customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
   type       LoyaltyEntryType
   points     Int
-  note       String?
+  note       String?  @db.Text
   createdAt  DateTime         @default(now())
 
   @@index([customerId])
@@ -278,7 +278,7 @@ model StockAdjustment {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   before    Int
   after     Int
-  reason    String?
+  reason    String?  @db.Text
   createdAt DateTime @default(now())
 
   @@index([storeId, createdAt])

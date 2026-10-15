@@ -34,8 +34,8 @@ export default async function BillsPage({ searchParams }: PageProps<"/bills">) {
         ...(q
           ? {
               OR: [
-                { billNo: { contains: q, mode: "insensitive" } },
-                { supplier: { name: { contains: q, mode: "insensitive" } } },
+                { billNo: { contains: q } },
+                { supplier: { name: { contains: q } } },
               ],
             }
           : {}),

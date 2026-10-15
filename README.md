@@ -14,7 +14,7 @@
 - **มือถือ** — มือถือจะเข้าหน้าค้นหาราคา (`/search`) เป็นหน้าหลักแทนแดชบอร์ด มีปุ่มลัดไปบันทึกรายรับ-รายจ่าย
   ปรับสต็อก และตัดของเสีย พร้อมใช้งานแบบ PWA (ติดตั้งลงหน้าจอได้ มีหน้าแสดงเมื่อออฟไลน์)
 
-Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + PostgreSQL
+Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + MariaDB/MySQL (`@prisma/adapter-mariadb`)
 
 ## เริ่มต้นใช้งาน
 
@@ -24,20 +24,16 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Po
    npm install
    ```
 
-2. ตั้งค่าฐานข้อมูล — สร้างไฟล์ `.env` (ดูตัวอย่างค่าที่ต้องมีด้านล่าง) แล้วชี้ `DATABASE_URL`
-   ไปยัง Postgres ของคุณ วิธีที่เร็วที่สุดสำหรับ local dev คือให้ Prisma รันเซิร์ฟเวอร์ Postgres ให้เอง:
+2. ตั้งค่าฐานข้อมูล — สร้างฐานข้อมูล MariaDB (หรือ MySQL) แบบ `utf8mb4` แล้วสร้างไฟล์ `.env`
+   ชี้ `DATABASE_URL` ไปที่ฐานนั้น เช่น MariaDB ใน WAMP (พอร์ต 3307):
 
-   ```bash
-   npx prisma dev
+   ```sql
+   CREATE DATABASE shop_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-
-   คำสั่งนี้จะพิมพ์ connection string ออกมา (เช่น `postgres://postgres:postgres@localhost:PORT/DBNAME`)
-   ให้คัดลอกไปใส่ใน `.env`. หรือจะใช้ Postgres ของคุณเอง / บริการฟรีอย่าง
-   [Neon](https://neon.tech) หรือ [Supabase](https://supabase.com) ก็ได้เช่นกัน
 
    ```bash
    # .env
-   DATABASE_URL="postgres://postgres:postgres@localhost:PORT/DBNAME?sslmode=disable"
+   DATABASE_URL="mysql://root@127.0.0.1:3307/shop_dev"
    SESSION_SECRET="สุ่มด้วย: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
    ```
 
@@ -76,6 +72,11 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Po
 - `grocery-saas/` — มอคอัพดีไซน์ต้นฉบับ (Claude Design canvas) ไว้อ้างอิง ไม่ใช่ส่วนหนึ่งของแอประบบจริง
 
 ## หมายเหตุสำคัญ
+
+- **ฐานข้อมูลต้องใช้ engine InnoDB** (ต้องมี transaction และ foreign key) MariaDB ใน WAMP ตั้งค่าเริ่มต้นเป็น MyISAM
+  ให้ตั้ง `default_storage_engine=InnoDB` ใน `my.ini` ก่อนรัน migration ส่วน hosting ทั่วไป (เช่น Plesk) ใช้ InnoDB อยู่แล้ว
+- **การค้นหาไม่สนตัวพิมพ์เล็ก/ใหญ่** อาศัย collation ของฐานข้อมูล (`utf8mb4_unicode_ci` หรือ `utf8mb4_general_ci`)
+  ห้ามสร้างฐานข้อมูลด้วย collation แบบ `_bin` / `_cs`
 
 - **การสแกนบาร์โค้ด** ใช้ `BarcodeDetector` API ของเบราว์เซอร์ (รองรับ Chrome/Edge บนมือถือและเดสก์ท็อป
   ยังไม่รองรับ Safari/iOS) มีช่องกรอกเลขบาร์โค้ดด้วยตนเองเป็นทางเลือกสำรองเสมอ

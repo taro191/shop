@@ -1,18 +1,14 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
 
 declare global {
   var __prisma: PrismaClient | undefined;
-  var __pgPool: Pool | undefined;
 }
 
-const pool = global.__pgPool ?? new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
+const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
 
 export const prisma = global.__prisma ?? new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== "production") {
   global.__prisma = prisma;
-  global.__pgPool = pool;
 }

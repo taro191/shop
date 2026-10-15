@@ -25,7 +25,7 @@ export default async function InventoryPage({
     where: {
       storeId: user.storeId,
       ...(category !== "ทั้งหมด" ? { category } : {}),
-      ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+      ...(q ? { name: { contains: q } } : {}),
     },
     orderBy: { name: "asc" },
   });

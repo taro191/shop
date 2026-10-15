@@ -23,7 +23,7 @@ export default async function SuppliersPage({
       where: {
         storeId: user.storeId,
         ...(category !== "ทั้งหมด" ? { category } : {}),
-        ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
+        ...(q ? { name: { contains: q } } : {}),
       },
       include: { supplierPrices: { include: { supplier: true } }, preferredSupplier: true },
       orderBy: { name: "asc" },
