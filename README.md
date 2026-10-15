@@ -54,6 +54,22 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Ma
 
    เปิด [http://localhost:3000](http://localhost:3000)
 
+## Deploy บน Plesk (Node.js / Passenger)
+
+1. Git: ดึง repo ลงโฟลเดอร์ของโดเมน (เช่น `/shop`)
+2. Node.js: Application Root = โฟลเดอร์ repo, Document Root = `<repo>/public`,
+   Application Startup File = `server.js`, Application Mode = `production`
+3. Custom environment variables: `DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/DBNAME"` และ `SESSION_SECRET` ค่าใหม่
+4. ใน "Run Node.js commands" (ต้องติดตั้ง devDependencies ด้วยเพราะใช้ตอน build):
+
+   ```bash
+   npm install --include=dev
+   npm run build
+   npm run db:deploy
+   ```
+
+5. กด Restart App — ทุกครั้งที่ deploy โค้ดใหม่ให้ทำข้อ 4–5 ซ้ำ
+
 ## โครงสร้างโปรเจกต์
 
 - `src/app/page.tsx` — หน้า Landing + ฟอร์มสมัครสมาชิก (สร้างร้านใหม่)
