@@ -60,15 +60,16 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Ma
 2. Node.js: Application Root = โฟลเดอร์ repo, Document Root = `<repo>/public`,
    Application Startup File = `server.js`, Application Mode = `production`
 3. Custom environment variables: `DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/DBNAME"` และ `SESSION_SECRET` ค่าใหม่
-4. ใน "Run Node.js commands" (ต้องติดตั้ง devDependencies ด้วยเพราะใช้ตอน build):
+   (ไม่ต้องมีไฟล์ `.env` บนเซิร์ฟเวอร์)
+4. ใน "Run Node.js commands" (ต้องติดตั้ง devDependencies ด้วยเพราะใช้ตอน build — ขั้นนี้ไม่ต้องใช้ env vars):
 
    ```bash
    npm install --include=dev
    npm run build
-   npm run db:deploy
    ```
 
-5. กด Restart App — ทุกครั้งที่ deploy โค้ดใหม่ให้ทำข้อ 4–5 ซ้ำ
+5. กด Restart App — `server.js` จะรัน `prisma migrate deploy` ให้เองตอนเริ่มแอป (ปิดได้ด้วย `SKIP_MIGRATE=1`)
+   ทุกครั้งที่ deploy โค้ดใหม่ให้ทำข้อ 4–5 ซ้ำ
 
 ## โครงสร้างโปรเจกต์
 
