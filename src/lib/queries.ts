@@ -79,7 +79,7 @@ export async function getWeeklySales(storeId: string) {
 }
 
 /** Average gross-margin ratio across the store's current catalog, used to estimate
- * cost/profit per report period since individual sale line items aren't tracked yet. */
+ * cost/profit for sales recorded without line items (e.g. manual daily income entries). */
 export async function getAverageMarginRatio(storeId: string) {
   const products = await prisma.product.findMany({ where: { storeId }, select: { costPrice: true, sellPrice: true } });
   const withSell = products.filter((p) => p.sellPrice > 0);
