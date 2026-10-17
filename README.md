@@ -6,6 +6,8 @@
 
 - **หน้าขาย (POS)** — เลือกสินค้า/สแกนบาร์โค้ด ตัดสต็อกแบบ atomic รับเงินสดหรือ QR พร้อมเพย์ (สร้าง QR ตามยอดจริง)
   พิมพ์ใบเสร็จ และออกใบกำกับภาษีสำหรับร้านที่จด VAT
+- **คลังสินค้ากลาง** — ฐานข้อมูลสินค้าร้านขายของชำกว่า 2,600 รายการ (ส่วนใหญ่มีบาร์โค้ดจริง) ที่ทุกร้านใช้ร่วมกัน
+  เลือกสินค้าแล้วใส่ราคาทุน/ราคาขาย/จำนวน เพื่อเพิ่มเข้าคลังสินค้าของร้านได้ทันที
 - **สินค้าและสต็อก** — คลังสินค้า, ตรวจนับสต็อก, ตัดสต็อกของเสีย/หมดอายุ, ติดตามวันหมดอายุ, พิมพ์ฉลากบาร์โค้ด
 - **ซื้อสินค้า** — เทียบราคาซัพพลายเออร์, ใบสั่งซื้อ (PO) และบิลซื้อสินค้า พร้อมรับสินค้าเข้าสต็อก
 - **ลูกค้า** — สมาชิกและแต้มสะสม
@@ -71,6 +73,32 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Ma
 5. กด Restart App — `server.js` จะรัน `prisma migrate deploy` ให้เองตอนเริ่มแอป (ปิดได้ด้วย `SKIP_MIGRATE=1`)
    ทุกครั้งที่ deploy โค้ดใหม่ให้ทำข้อ 4–5 ซ้ำ
 
+## คลังสินค้ากลาง (shared catalog)
+
+ตาราง `CatalogProduct` ไม่ผูกกับร้านใด ข้อมูลมาจาก 2 แหล่ง:
+
+- **Open Food Facts** (สัญญาอนุญาต [ODbL](https://opendatacommons.org/licenses/odbl/1-0/)) — สินค้าที่ขายในไทย
+  คัดเฉพาะบาร์โค้ด 885 (ลงทะเบียนในไทย) และตัดแบรนด์ของร้านสะดวกซื้อ/ห้าง อาหารพร้อมทาน ของสด และอาหารเสริมออก
+  ข้อมูลนี้ผู้ใช้ทั่วโลกร่วมกันบันทึก ชื่อหรือขนาดอาจคลาดเคลื่อนได้ และหน้า `/catalog` แสดงที่มาของข้อมูลไว้แล้ว
+  (ODbL กำหนดให้ระบุที่มา และถ้าเผยแพร่ฐานข้อมูลที่ดัดแปลงต่อ ต้องใช้สัญญาอนุญาตเดียวกัน)
+- **`scripts/catalog/curated.json`** — สินค้าพื้นฐานไม่มีบาร์โค้ด (ข้าวสาร ไข่ น้ำแข็ง น้ำตาล ฯลฯ)
+  และของใช้ในบ้าน/ของใช้ส่วนตัว ซึ่ง Open Food Facts แทบไม่มีข้อมูล
+
+ข้อมูลถูกใส่ผ่าน migration (`prisma/migrations/*_shared_catalog`) จึงขึ้นเซิร์ฟเวอร์พร้อม `prisma migrate deploy`
+วิธีอัปเดตข้อมูล:
+
+```bash
+# 1. ดาวน์โหลดหน้า JSON จาก search.openfoodfacts.org ลงโฟลเดอร์ เช่น /tmp/off (ไฟล์ off_1.json, off_2.json, ...)
+#    https://search.openfoodfacts.org/search?q=countries_tags:%22en:thailand%22&page_size=100&page=N
+#      &fields=code,product_name,product_name_th,product_name_en,brands,quantity,categories_tags,unique_scans_n
+# 2. สร้าง prisma/catalog/catalog.json ใหม่
+node scripts/catalog/build-catalog.mjs /tmp/off
+# 3. สร้าง migration ว่าง แล้วเติมคำสั่ง upsert ลงไป
+npx prisma migrate dev --create-only --name refresh_catalog
+node scripts/catalog/catalog-to-sql.mjs >> prisma/migrations/<โฟลเดอร์ใหม่>/migration.sql
+npx prisma migrate dev
+```
+
 ## โครงสร้างโปรเจกต์
 
 - `src/app/page.tsx` — หน้า Landing + ฟอร์มสมัครสมาชิก (สร้างร้านใหม่)
@@ -78,7 +106,7 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Ma
 - `src/app/(protected)/` — หน้าจอหลังเข้าสู่ระบบ — responsive: sidebar บนเดสก์ท็อป, bottom nav บนมือถือ
   ในโค้ดชุดเดียวกัน
   - ขายและการเงิน: `sell`, `income`, `cashflow`, `reports`, `dashboard`
-  - สินค้าและสต็อก: `inventory`, `stock-take`, `write-off`, `labels`, `search`
+  - สินค้าและสต็อก: `inventory`, `catalog` (คลังสินค้ากลาง), `stock-take`, `write-off`, `labels`, `search`
   - ซื้อสินค้าและลูกค้า: `suppliers`, `bills` (บิลซื้อ/ใบสั่งซื้อ), `customers`
   - จัดการร้าน (เฉพาะเจ้าของ): `settings`, `staff`, `branches`, `billing`, `audit-log`
   - `more` — เมนูรวมบนมือถือ

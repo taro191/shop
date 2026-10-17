@@ -344,3 +344,23 @@ model BillLineItem {
 
   @@index([billId])
 }
+
+/** Shared product catalog — not store-scoped. Stores browse it on /catalog and copy
+ * entries into their own Product table (setting their own prices and stock). Loaded
+ * by data migrations from prisma/catalog/catalog.json (see scripts/catalog/); `id` is
+ * stable ("off-<barcode>" for Open Food Facts items, "cur-<n>" for hand-curated ones)
+ * so later refreshes can upsert. */
+model CatalogProduct {
+  id         String  @id
+  barcode    String? @unique
+  name       String
+  brand      String?
+  category   String
+  unit       String
+  size       String?
+  source     String
+  popularity Int     @default(0)
+
+  @@index([category, popularity])
+  @@index([name])
+}

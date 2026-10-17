@@ -39,7 +39,10 @@ export default async function InventoryPage({
         subtitle={`ทั้งหมด ${products.length} รายการ · ใกล้หมด/หมด ${lowCount} รายการ`}
         action={
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link href="/labels" className="rounded-[10px] border border-border px-4 py-2.5 text-[13px] font-semibold text-foreground/70">
+            <Link href="/catalog" className="rounded-[10px] border border-brand px-4 py-2.5 text-[13px] font-semibold text-brand">
+              เลือกจากคลังสินค้ากลาง
+            </Link>
+            <Link href="/labels"className="rounded-[10px] border border-border px-4 py-2.5 text-[13px] font-semibold text-foreground/70">
               พิมพ์ป้ายราคา
             </Link>
             <Link href="/stock-take" className="rounded-[10px] border border-border px-4 py-2.5 text-[13px] font-semibold text-foreground/70">

@@ -20,11 +20,13 @@ import {
   WalletIcon,
   AlertTriangleIcon,
   ChevronRightIcon,
+  CatalogIcon,
 } from "@/components/icons";
 
 const DESKTOP_LINKS = [
   { href: "/dashboard", label: "แดชบอร์ด", desc: "ภาพรวมร้านค้าและยอดขาย", icon: DashboardIcon },
   { href: "/inventory", label: "คลังสินค้า", desc: "จัดการสต๊อกและราคาสินค้า", icon: InventoryIcon },
+  { href: "/catalog", label: "คลังสินค้ากลาง", desc: "เลือกสินค้าร้านชำจากฐานข้อมูลกลางเข้าร้าน", icon: CatalogIcon },
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", desc: "หาต้นทุนที่ถูกที่สุด", icon: CompareIcon },
   { href: "/customers", label: "ลูกค้า / สมาชิก", desc: "รายชื่อลูกค้าและแต้มสะสม", icon: UsersIcon },
   { href: "/cashflow", label: "รายรับ-รายจ่ายทั่วไป", desc: "ค่าน้ำ ค่าไฟ ค่าเช่า และรายรับ-จ่ายอื่นๆ", icon: WalletIcon },

@@ -14,7 +14,11 @@ export async function GET(request: NextRequest) {
     where: { storeId: session.storeId, barcode },
   });
 
-  if (!product) return NextResponse.json({ found: false });
+  if (!product) {
+    // Not stocked yet — tell the scanner if the shared catalog knows this barcode.
+    const catalog = await prisma.catalogProduct.findUnique({ where: { barcode }, select: { name: true } });
+    return NextResponse.json({ found: false, catalogName: catalog?.name ?? null });
+  }
 
   const status = productStockStatus(product.quantity);
   return NextResponse.json({
