@@ -8,6 +8,8 @@ export const PRODUCT_CATEGORIES = [
   "ขนม",
   "ของใช้ในบ้าน",
   "ของใช้ส่วนตัว",
+  "ยาและเวชภัณฑ์",
+  "อาหารสัตว์",
 ];
 export const PRODUCT_UNITS = [
   "ชิ้น",
@@ -25,5 +27,6 @@ export const PRODUCT_UNITS = [
   "ม้วน",
   "ด้าม",
   "กระปุก",
+  "ตลับ",
 ];
 export const SUPPLIER_NAMES_FALLBACK = ["สมบูรณ์การค้า", "ทองดีพาณิชย์", "แม่ประนอมโฮลเซล"];

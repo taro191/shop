@@ -137,6 +137,10 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
         <a href="https://world.openfoodfacts.org" target="_blank" rel="noreferrer" className="underline">
           Open Food Facts
         </a>{" "}
+        และ{" "}
+        <a href="https://world.openpetfoodfacts.org" target="_blank" rel="noreferrer" className="underline">
+          Open Pet Food Facts
+        </a>{" "}
         (สัญญาอนุญาต ODbL) ซึ่งผู้ใช้ทั่วไปร่วมกันบันทึก ชื่อหรือขนาดอาจคลาดเคลื่อนได้ — ตรวจสอบกับสินค้าจริงก่อนเพิ่มเข้าร้าน
       </p>
     </div>

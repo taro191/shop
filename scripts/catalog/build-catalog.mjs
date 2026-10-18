@@ -1,8 +1,12 @@
 // Builds prisma/catalog/catalog.json — the shared product catalog — from
 //   1. Open Food Facts search exports for Thailand (ODbL, https://openfoodfacts.org),
 //      downloaded as JSON pages from search.openfoodfacts.org into <rawDir>
-//   2. scripts/catalog/curated.json — hand-written staples and household/personal-care
-//      items that Open Food Facts doesn't cover (no barcodes)
+//   2. scripts/catalog/curated.json — hand-written staples, household/personal-care items
+//      and ยาสามัญประจำบ้าน (household remedies a grocery may legally sell) that Open
+//      Food Facts doesn't cover (no barcodes)
+//   3. scripts/catalog/petfood.json — Thai-barcoded pet food from Open Pet Food Facts
+//      (ODbL, https://openpetfoodfacts.org), names rewritten in Thai by hand since the
+//      source entries are mostly English with unreliable quantities
 //
 // Usage: node scripts/catalog/build-catalog.mjs <rawDir>
 //
@@ -37,6 +41,7 @@ const EXCLUDED_TAGS =
 // First matching rule wins. `tags` match Open Food Facts category tags; `words` match the
 // product name (used for products with no category tags).
 const RULES = [
+  { category: "ยาและเวชภัณฑ์", tags: /^(th:ยาจากสมุนไพร|en:medicines|en:herbal-medicines)$/, words: /^ยา(ดม|หอม|หม่อง|แคปซูล|อม|แก้|ธาตุ|เม็ด)/ },
   { category: "บะหมี่กึ่งสำเร็จรูป", tags: /^en:(instant-noodles|congee)$/, words: /บะหมี่|มาม่า|ไวไว|ยำยำ|โจ๊กคัพ|เส้นหมี่กึ่ง/ },
   { category: "อาหารกระป๋อง", tags: /^en:(canned-foods|canned-.*|sardines.*|tunas|mackerels|mackerel-.*)$/, words: /กระป๋อง|ปลาซาร์ดีน|ทูน่า|แมคเคอเรล/ },
   {
@@ -110,6 +115,8 @@ function guessUnit(category, name, size) {
       return /ไอศกรีม/.test(name) ? "ชิ้น" : /ขนมปัง/.test(name) ? "ถุง" : "ซอง";
     case "อาหารแห้ง":
       return /ไข่/.test(name) ? "แผง" : "ถุง";
+    case "ยาและเวชภัณฑ์":
+      return /ยาดม/.test(name) ? "หลอด" : /แคปซูล/.test(name) || liquid ? "ขวด" : "ซอง";
     default:
       return "ชิ้น";
   }
@@ -153,6 +160,21 @@ for (const p of raw.values()) {
     size,
     source: "openfoodfacts",
     popularity: p.unique_scans_n ?? 0,
+  });
+}
+
+const petfood = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "petfood.json"), "utf8"));
+for (const p of petfood) {
+  items.push({
+    id: `opff-${p.barcode}`,
+    barcode: p.barcode,
+    name: p.name,
+    brand: p.brand ?? null,
+    category: "อาหารสัตว์",
+    unit: p.unit,
+    size: p.size ?? null,
+    source: "openpetfoodfacts",
+    popularity: 0,
   });
 }
 

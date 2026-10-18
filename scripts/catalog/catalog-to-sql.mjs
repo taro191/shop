@@ -1,11 +1,21 @@
 // Prints MySQL upsert statements for prisma/catalog/catalog.json, for appending to a
 // Prisma migration so the shared catalog ships with `prisma migrate deploy`.
 //
-// Usage: node scripts/catalog/catalog-to-sql.mjs >> prisma/migrations/<dir>/migration.sql
+// Usage: node scripts/catalog/catalog-to-sql.mjs [--diff <old catalog.json>] >> prisma/migrations/<dir>/migration.sql
+//
+// With --diff, only rows that are new or changed since <old catalog.json> are emitted, e.g.
+//   git show HEAD:prisma/catalog/catalog.json > /tmp/old.json
+// Rows removed from the catalog are not deleted from the database.
 import fs from "node:fs";
 import path from "node:path";
 
-const items = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../../prisma/catalog/catalog.json"), "utf8"));
+let items = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../../prisma/catalog/catalog.json"), "utf8"));
+
+const diffIdx = process.argv.indexOf("--diff");
+if (diffIdx !== -1) {
+  const old = new Map(JSON.parse(fs.readFileSync(process.argv[diffIdx + 1], "utf8")).map((it) => [it.id, JSON.stringify(it)]));
+  items = items.filter((it) => old.get(it.id) !== JSON.stringify(it));
+}
 
 const str = (v) => (v == null ? "NULL" : `'${String(v).replace(/\\/g, "\\\\").replace(/'/g, "''")}'`);
 const COLS = ["id", "barcode", "name", "brand", "category", "unit", "size", "source", "popularity"];
