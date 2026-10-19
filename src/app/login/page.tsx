@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type ActionState } from "@/app/actions/auth-actions";
 import { ShopIcon } from "@/components/icons";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(loginAction, null);
@@ -40,9 +41,9 @@ export default function LoginPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-[12.5px] font-semibold text-muted">รหัสผ่าน</label>
-              <input
+              <PasswordInput
                 name="password"
-                type="password"
+                autoComplete="current-password"
                 placeholder="รหัสผ่านของคุณ"
                 required
                 className="w-full rounded-[10px] border border-border px-3.5 py-3 text-sm outline-none focus:border-brand"
@@ -57,9 +58,12 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-5 rounded-lg bg-background px-3.5 py-2.5 text-center text-[11.5px] text-muted">
-            บัญชีทดลอง: 0812345678 / password123
-          </p>
+          {/* The seeded demo account only exists in local dev databases (prisma/seed.ts). */}
+          {process.env.NODE_ENV === "development" && (
+            <p className="mt-5 rounded-lg bg-background px-3.5 py-2.5 text-center text-[11.5px] text-muted">
+              บัญชีทดลอง: 0812345678 / password123
+            </p>
+          )}
         </div>
 
         <p className="mt-5 text-center text-[13px] text-muted">
