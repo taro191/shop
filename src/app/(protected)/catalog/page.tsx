@@ -69,6 +69,7 @@ export default async function CatalogPage({ searchParams }: PageProps<"/catalog"
           placeholder="ค้นหาชื่อ ยี่ห้อ หรือบาร์โค้ด..."
           defaultValue={q}
           hiddenParams={{ category: category !== "ทั้งหมด" ? category : undefined }}
+          scan
         />
         <FilterChips basePath="/catalog" paramName="category" options={["ทั้งหมด", ...PRODUCT_CATEGORIES]} current={category} otherParams={{ q }} />
       </div>

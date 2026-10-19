@@ -2,14 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BarcodeIcon } from "@/components/icons";
+import { canUseCamera, createBarcodeReader } from "@/lib/barcode-detector";
 
-declare global {
-  interface Window {
-    BarcodeDetector?: new (options?: { formats: string[] }) => {
-      detect(source: CanvasImageSource): Promise<{ rawValue: string }[]>;
-    };
-  }
-}
 
 const COOLDOWN_MS = 1200;
 
@@ -29,7 +23,7 @@ export function SellScanner({
   const rafRef = useRef<number | null>(null);
   const lastCodeRef = useRef<{ code: string; at: number } | null>(null);
 
-  const [supported] = useState<boolean>(() => typeof window !== "undefined" && "BarcodeDetector" in window);
+  const [supported] = useState<boolean>(() => canUseCamera());
   const [cameraState, setCameraState] = useState<"idle" | "starting" | "live" | "denied">("idle");
   const [flash, setFlash] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState("");
@@ -56,7 +50,7 @@ export function SellScanner({
   }, []);
 
   const startCamera = useCallback(async () => {
-    if (!window.BarcodeDetector) return;
+    if (!canUseCamera()) return;
     setCameraState("starting");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
@@ -67,9 +61,7 @@ export function SellScanner({
       }
       setCameraState("live");
 
-      const detector = new window.BarcodeDetector({
-        formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "qr_code"],
-      });
+      const detector = await createBarcodeReader();
 
       const tick = async () => {
         if (!videoRef.current || videoRef.current.readyState < 2) {
@@ -115,7 +107,7 @@ export function SellScanner({
 
       {supported === false && (
         <div className="rounded-xl bg-accent-light px-4 py-3 text-[12.5px] text-accent-dark">
-          เบราว์เซอร์นี้ยังไม่รองรับการสแกนบาร์โค้ดจากกล้องโดยตรง กรุณากรอกเลขบาร์โค้ดด้วยตนเองด้านล่าง
+          เบราว์เซอร์นี้เปิดกล้องไม่ได้ กรุณากรอกเลขบาร์โค้ดด้วยตนเองด้านล่าง
         </div>
       )}
 

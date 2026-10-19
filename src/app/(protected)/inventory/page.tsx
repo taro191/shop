@@ -25,7 +25,7 @@ export default async function InventoryPage({
     where: {
       storeId: user.storeId,
       ...(category !== "ทั้งหมด" ? { category } : {}),
-      ...(q ? { name: { contains: q } } : {}),
+      ...(q ? { OR: [{ name: { contains: q } }, { barcode: q }] } : {}),
     },
     orderBy: { name: "asc" },
   });
@@ -68,7 +68,7 @@ export default async function InventoryPage({
 
       <div className="flex flex-col gap-3 px-5 pt-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <FilterChips basePath="/inventory" paramName="category" options={["ทั้งหมด", ...PRODUCT_CATEGORIES]} current={category} otherParams={{ q }} />
-        <SearchBox action="/inventory" placeholder="ค้นหาชื่อสินค้า..." defaultValue={q} hiddenParams={{ category: category !== "ทั้งหมด" ? category : undefined }} />
+        <SearchBox action="/inventory" placeholder="ชื่อสินค้าหรือบาร์โค้ด..." defaultValue={q} scan hiddenParams={{ category: category !== "ทั้งหมด" ? category : undefined }} />
       </div>
 
       <div className="mx-5 mt-5 overflow-hidden rounded-2xl border border-border bg-white sm:mx-8">

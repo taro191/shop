@@ -49,7 +49,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
       </div>
 
       <div className="flex flex-col gap-3 px-5 pt-4 sm:px-8">
-        <SearchBox action="/stock" placeholder="ชื่อสินค้าหรือเลขบาร์โค้ด..." defaultValue={q} hiddenParams={{ view: view !== "ใกล้หมด" ? view : undefined }} />
+        <SearchBox action="/stock" placeholder="ชื่อสินค้าหรือเลขบาร์โค้ด..." defaultValue={q} scan hiddenParams={{ view: view !== "ใกล้หมด" ? view : undefined }} />
         <FilterChips basePath="/stock" paramName="view" options={VIEWS} current={view} allValue="ใกล้หมด" otherParams={{ q }} />
       </div>
 
