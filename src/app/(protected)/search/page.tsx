@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LiveSearchBox } from "@/components/LiveSearchBox";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { productStockStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
 import { WalletIcon, ClipboardCheckIcon, AlertTriangleIcon } from "@/components/icons";
@@ -30,11 +31,6 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
         take: 30,
       })
     : [];
-
-  const catalogMatches =
-    q && products.length === 0
-      ? await prisma.catalogProduct.count({ where: { OR: [{ name: { contains: q } }, { brand: { contains: q } }, { barcode: q }] } })
-      : 0;
 
   const recent = q
     ? []
@@ -150,14 +146,9 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
               <div className="flex flex-col items-center gap-3 rounded-[14px] border border-dashed border-border bg-white px-5 py-8 text-center">
                 <div className="text-[13px] text-muted">ไม่พบสินค้า &ldquo;{q}&rdquo; ในระบบ</div>
                 <div className="flex w-full flex-col gap-2">
-                  {catalogMatches > 0 && (
-                    <Link
-                      href={`/catalog?q=${encodeURIComponent(q)}`}
-                      className="rounded-[10px] border border-brand bg-brand-light py-2.5 text-center text-[13px] font-semibold text-brand"
-                    >
-                      พบในคลังสินค้ากลาง {catalogMatches} รายการ — เลือกเพิ่มเข้าร้าน
-                    </Link>
-                  )}
+                  <div className="text-left">
+                    <CatalogFallback q={q} />
+                  </div>
                   <a
                     href={`https://www.google.com/search?q=${encodeURIComponent(q)}`}
                     target="_blank"

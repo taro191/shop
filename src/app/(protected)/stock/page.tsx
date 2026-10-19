@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FilterChips } from "@/components/ui/FilterChips";
 import { SearchBox } from "@/components/ui/SearchBox";
+import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
 import { addDays } from "@/lib/date";
@@ -56,7 +57,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
       <div className="mx-5 mt-4 overflow-hidden rounded-2xl border border-border bg-white sm:mx-8">
         {products.length === 0 ? (
           <div className="px-5 py-12 text-center text-[13px] text-muted">
-            {q ? `ไม่พบสินค้า "${q}"` : view === "ทั้งหมด" ? "ยังไม่มีสินค้าในร้าน" : "ไม่มีสินค้าในกลุ่มนี้"}
+            {q ? `ไม่พบสินค้า "${q}" ในร้าน` : view === "ทั้งหมด" ? "ยังไม่มีสินค้าในร้าน" : "ไม่มีสินค้าในกลุ่มนี้"}
           </div>
         ) : (
           products.map((p) => {
@@ -81,6 +82,12 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
           })
         )}
       </div>
+
+      {q && products.length === 0 && (
+        <div className="px-5 pt-3 sm:px-8">
+          <CatalogFallback q={q} />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2 px-5 pt-4 sm:px-8">
         <Link href="/receive" className="rounded-[11px] bg-brand py-3 text-center text-[13px] font-semibold text-white">

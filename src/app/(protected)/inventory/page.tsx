@@ -9,6 +9,7 @@ import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS } from "@/lib/constants";
 import Link from "next/link";
+import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 
 export default async function InventoryPage({
   searchParams,
@@ -82,7 +83,14 @@ export default async function InventoryPage({
         </div>
 
         {products.length === 0 ? (
-          <div className="px-6 py-14 text-center text-[13px] text-muted">ไม่พบสินค้า</div>
+          <div className="px-6 py-10 text-center text-[13px] text-muted">
+            ไม่พบสินค้า{q ? ` "${q}" ในร้าน` : ""}
+            {q && (
+              <div className="mx-auto mt-4 max-w-[480px] text-left">
+                <CatalogFallback q={q} />
+              </div>
+            )}
+          </div>
         ) : (
           products.map((p) => {
             const status = productStockStatus(p.quantity);

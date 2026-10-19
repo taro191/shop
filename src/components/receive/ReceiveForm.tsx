@@ -1,18 +1,25 @@
 "use client";
 
 import { useCallback, useMemo, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SellScanner } from "@/components/sell/SellScanner";
 import { TrashIcon } from "@/components/icons";
 import { quickReceiveAction, type QuickReceiveInput } from "@/app/(protected)/receive/actions";
+import { CatalogFallback } from "@/components/catalog/CatalogFallback";
+import type { AddedProduct } from "@/app/(protected)/catalog/actions";
 
 type ProductRow = { id: string; name: string; unit: string; barcode: string | null; costPrice: number; quantity: number };
 type SupplierRow = { id: string; name: string };
 type Line = { productId: string; qty: string; cost: string };
 
-export function ReceiveForm({ products, suppliers }: { products: ProductRow[]; suppliers: SupplierRow[] }) {
+export function ReceiveForm({ products: storeProducts, suppliers }: { products: ProductRow[]; suppliers: SupplierRow[] }) {
   const router = useRouter();
+  // Products pulled in from the shared catalog during this visit, until the page refreshes.
+  const [pulled, setPulled] = useState<ProductRow[]>([]);
+  const products = useMemo(
+    () => [...storeProducts, ...pulled.filter((p) => !storeProducts.some((s) => s.id === p.id))],
+    [storeProducts, pulled],
+  );
   const [lines, setLines] = useState<Line[]>([]);
   const [query, setQuery] = useState("");
   const [showScanner, setShowScanner] = useState(false);
@@ -55,6 +62,14 @@ export function ReceiveForm({ products, suppliers }: { products: ProductRow[]; s
     if (!q) return [];
     return products.filter((p) => p.name.toLowerCase().includes(q) || p.barcode === q).slice(0, 8);
   }, [products, query]);
+
+  function addFromCatalog(product: AddedProduct) {
+    setPulled((cur) => [...cur, product]);
+    addProduct(product);
+    setUnknownCode(null);
+    setQuery("");
+    router.refresh();
+  }
 
   const total = lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.cost) || 0), 0);
 
@@ -108,15 +123,9 @@ export function ReceiveForm({ products, suppliers }: { products: ProductRow[]; s
       )}
 
       {unknownCode && (
-        <div className="rounded-xl border border-accent bg-accent-light px-4 py-3 text-[12.5px] text-accent-dark">
-          ไม่พบบาร์โค้ด {unknownCode} ในร้าน —{" "}
-          <Link href={`/catalog?q=${encodeURIComponent(unknownCode)}`} className="font-semibold underline">
-            หาในคลังสินค้ากลาง
-          </Link>{" "}
-          หรือ{" "}
-          <Link href="/inventory" className="font-semibold underline">
-            เพิ่มสินค้าใหม่
-          </Link>
+        <div className="flex flex-col gap-2">
+          <div className="text-[12.5px] text-accent-dark">ไม่พบบาร์โค้ด {unknownCode} ในร้าน</div>
+          <CatalogFallback key={unknownCode} q={unknownCode} onAdded={addFromCatalog} />
         </div>
       )}
 
@@ -127,6 +136,11 @@ export function ReceiveForm({ products, suppliers }: { products: ProductRow[]; s
           placeholder="หรือพิมพ์ชื่อสินค้าเพื่อเพิ่ม..."
           className="w-full rounded-[10px] border border-border bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand"
         />
+        {query.trim().length >= 2 && matches.length === 0 && (
+          <div className="mt-2">
+            <CatalogFallback q={query} onAdded={addFromCatalog} />
+          </div>
+        )}
         {matches.length > 0 && (
           <div className="mt-1 overflow-hidden rounded-[10px] border border-border bg-white shadow-sm">
             {matches.map((p) => (

@@ -2,12 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BarcodeIcon } from "@/components/icons";
+import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { canUseCamera, createBarcodeReader } from "@/lib/barcode-detector";
 
 type LookupResult = {
   found: boolean;
-  /** Name in the shared catalog when the store doesn't stock this barcode yet. */
-  catalogName?: string | null;
   product?: {
     id: string;
     name: string;
@@ -126,14 +125,11 @@ export function BarcodeScanner() {
               </svg>
             </div>
             <div className="mb-1.5 font-display text-[16px] font-semibold text-foreground">ไม่พบสินค้า</div>
-            <div className="mb-5 text-[12.5px] text-muted">ไม่พบสินค้าที่ใช้บาร์โค้ด {scannedCode} ในระบบ</div>
-            {result.catalogName && (
-              <a
-                href={`/catalog?q=${encodeURIComponent(scannedCode ?? "")}`}
-                className="mb-2.5 block w-full rounded-[11px] border border-brand bg-brand-light py-3 text-[13px] font-semibold text-brand"
-              >
-                พบในคลังสินค้ากลาง: {result.catalogName} — เพิ่มเข้าร้าน
-              </a>
+            <div className="mb-3 text-[12.5px] text-muted">ไม่พบสินค้าที่ใช้บาร์โค้ด {scannedCode} ในร้าน</div>
+            {scannedCode && (
+              <div className="mb-3 text-left">
+                <CatalogFallback q={scannedCode} onAdded={() => void lookup(scannedCode)} />
+              </div>
             )}
           </>
         )}

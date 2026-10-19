@@ -6,7 +6,20 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
-export type CatalogAddState = { error?: string; ok?: boolean } | null;
+/** The store product created from a catalog entry — enough for callers (POS cart,
+ * receiving list, scanner) to use it right away without reloading. */
+export type AddedProduct = {
+  id: string;
+  name: string;
+  unit: string;
+  category: string;
+  barcode: string | null;
+  costPrice: number;
+  sellPrice: number;
+  quantity: number;
+};
+
+export type CatalogAddState = { error?: string; ok?: boolean; product?: AddedProduct } | null;
 
 const schema = z.object({
   catalogId: z.string().min(1),
@@ -65,5 +78,20 @@ export async function addFromCatalogAction(_prev: CatalogAddState, formData: For
   revalidatePath("/inventory");
   revalidatePath("/dashboard");
   revalidatePath("/search");
-  return { ok: true };
+  revalidatePath("/stock");
+  revalidatePath("/receive");
+  revalidatePath("/sell");
+  return {
+    ok: true,
+    product: {
+      id: product.id,
+      name: product.name,
+      unit: product.unit,
+      category: product.category,
+      barcode: product.barcode,
+      costPrice: product.costPrice,
+      sellPrice: product.sellPrice,
+      quantity: product.quantity,
+    },
+  };
 }

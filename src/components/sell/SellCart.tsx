@@ -2,6 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CatalogFallback } from "@/components/catalog/CatalogFallback";
+import type { AddedProduct } from "@/app/(protected)/catalog/actions";
 import { checkoutSale, type CheckoutResult } from "@/app/(protected)/sell/actions";
 import { SellScanner } from "@/components/sell/SellScanner";
 import { PromptPayQR } from "@/components/PromptPayQR";
@@ -47,6 +50,9 @@ export function SellCart({
   const [method, setMethod] = useState<"CASH" | "TRANSFER">("CASH");
   const [showQr, setShowQr] = useState(false);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
+  /** Scanned barcode the store doesn't stock — offered from the shared catalog. */
+  const [missingCode, setMissingCode] = useState<string | null>(null);
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [pending, startTransition] = useTransition();
@@ -66,7 +72,7 @@ export function SellCart({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return products.slice(0, 30);
-    return products.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 30);
+    return products.filter((p) => p.name.toLowerCase().includes(q) || p.barcode === q).slice(0, 30);
   }, [products, query]);
 
   const matchedCustomers = useMemo(() => {
@@ -125,13 +131,24 @@ export function SellCart({
   function handleScan(barcode: string) {
     const product = byBarcode.get(barcode);
     if (!product) {
-      setScanNotice(`ไม่พบสินค้าที่บาร์โค้ด ${barcode} ในระบบ`);
-      setTimeout(() => setScanNotice((n) => (n?.includes(barcode) ? null : n)), 2500);
+      setScanNotice(`ไม่พบสินค้าที่บาร์โค้ด ${barcode} ในร้าน`);
+      setMissingCode(barcode);
       return;
     }
+    setMissingCode(null);
     addToCart(product);
     setScanNotice(`เพิ่ม "${product.name}" ลงตะกร้าแล้ว`);
     setTimeout(() => setScanNotice((n) => (n?.includes(product.name) ? null : n)), 2000);
+  }
+
+  /** A product just pulled in from the shared catalog: put it in the cart right away and
+   * refresh so it's also in the product list for later sales. */
+  function addFromCatalog(product: AddedProduct) {
+    addToCart(product);
+    setMissingCode(null);
+    setQuery("");
+    setScanNotice(`เพิ่ม "${product.name}" เข้าร้านและลงตะกร้าแล้ว`);
+    router.refresh();
   }
 
   function requestCheckout() {
@@ -303,7 +320,12 @@ export function SellCart({
                     </button>
                   );
                 })}
-                {filtered.length === 0 && <div className="py-10 text-center text-[13px] text-muted">ไม่พบสินค้า</div>}
+                {filtered.length === 0 && (
+                  <div className="flex flex-col gap-3 py-4">
+                    <div className="text-center text-[13px] text-muted">ไม่พบสินค้าในร้าน</div>
+                    <CatalogFallback q={query} onAdded={addFromCatalog} />
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -311,6 +333,7 @@ export function SellCart({
               {scanNotice && (
                 <div className="rounded-lg bg-brand-light px-3.5 py-2.5 text-center text-[12.5px] font-medium text-brand">{scanNotice}</div>
               )}
+              {missingCode && <CatalogFallback key={missingCode} q={missingCode} onAdded={addFromCatalog} />}
               <SellScanner onDetect={handleScan} />
             </div>
           )}

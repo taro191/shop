@@ -1,13 +1,36 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { addFromCatalogAction, type CatalogAddState } from "@/app/(protected)/catalog/actions";
+import { useState, useTransition } from "react";
+import { addFromCatalogAction, type AddedProduct, type CatalogAddState } from "@/app/(protected)/catalog/actions";
 import { PlusIcon } from "@/components/icons";
 
-/** "เพิ่มเข้าร้าน" button for one catalog row — expands into a small price/stock form. */
-export function CatalogAddButton({ catalogId, unit }: { catalogId: string; unit: string }) {
-  const [open, setOpen] = useState(false);
-  const [state, formAction, pending] = useActionState<CatalogAddState, FormData>(addFromCatalogAction, null);
+/** "เพิ่มเข้าร้าน" button for one catalog row — expands into a small price/stock form.
+ * `onAdded` receives the new store product once it's saved. */
+export function CatalogAddButton({
+  catalogId,
+  unit,
+  defaultOpen = false,
+  onAdded,
+}: {
+  catalogId: string;
+  unit: string;
+  defaultOpen?: boolean;
+  onAdded?: (product: AddedProduct) => void;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [state, setState] = useState<CatalogAddState>(null);
+  const [pending, startTransition] = useTransition();
+
+  // Called directly rather than through useActionState: the action revalidates the
+  // current page, which can unmount this button (e.g. the empty-search prompt it sits in
+  // disappears once the product exists) before an effect would get to run onAdded.
+  function submit(formData: FormData) {
+    startTransition(async () => {
+      const result = await addFromCatalogAction(null, formData);
+      setState(result);
+      if (result?.product) onAdded?.(result.product);
+    });
+  }
 
   if (state?.ok) {
     return <span className="rounded-md bg-brand-light px-2.5 py-1 text-[11.5px] font-semibold text-brand">เพิ่มแล้ว</span>;
@@ -28,7 +51,7 @@ export function CatalogAddButton({ catalogId, unit }: { catalogId: string; unit:
 
   const input = "w-full rounded-[8px] border border-border px-2.5 py-1.5 text-[13px] outline-none focus:border-brand";
   return (
-    <form action={formAction} className="flex w-full flex-col gap-2 sm:w-[300px]">
+    <form action={submit} className="flex w-full flex-col gap-2 sm:w-[300px]">
       <input type="hidden" name="catalogId" value={catalogId} />
       <div className="grid grid-cols-3 gap-2">
         <label className="text-[11px] text-muted">
