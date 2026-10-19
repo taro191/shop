@@ -99,6 +99,9 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
   revalidatePath("/inventory");
   revalidatePath("/dashboard");
   revalidatePath("/search");
+  revalidatePath("/receive");
+  revalidatePath("/stock");
+  revalidatePath("/home");
   return { ok: true };
 }
 
@@ -139,6 +142,9 @@ export async function receiveBillAction(billId: string): Promise<ActionState> {
   revalidatePath("/inventory");
   revalidatePath("/dashboard");
   revalidatePath("/search");
+  revalidatePath("/receive");
+  revalidatePath("/stock");
+  revalidatePath("/home");
   return null;
 }
 

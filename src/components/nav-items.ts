@@ -7,7 +7,6 @@ import {
   IncomeIcon,
   BillsIcon,
   ReportsIcon,
-  SearchIcon,
   MoreIcon,
   UsersIcon,
   ClipboardCheckIcon,
@@ -19,6 +18,8 @@ import {
   WalletIcon,
   AlertTriangleIcon,
   CatalogIcon,
+  HomeIcon,
+  TruckIcon,
 } from "@/components/icons";
 
 export type NavItem = {
@@ -39,6 +40,7 @@ export const SIDEBAR_ITEMS: NavItem[] = [
   { href: "/income", label: "รายรับรายวัน", icon: IncomeIcon },
   { href: "/cashflow", label: "รายรับ-รายจ่ายทั่วไป", icon: WalletIcon },
   { href: "/bills", label: "บิลซื้อสินค้า", icon: BillsIcon },
+  { href: "/receive", label: "รับสินค้าเข้าสต๊อก", icon: TruckIcon },
   { href: "/customers", label: "ลูกค้า / สมาชิก", icon: UsersIcon },
   { href: "/stock-take", label: "ตรวจนับสต๊อก", icon: ClipboardCheckIcon },
   { href: "/write-off", label: "สินค้าหมดอายุ / ชำรุด", icon: AlertTriangleIcon },
@@ -52,9 +54,9 @@ export const SIDEBAR_ITEMS: NavItem[] = [
 
 /** Daily-operation items, shown in the mobile bottom tab bar. */
 export const BOTTOM_NAV_ITEMS: NavItem[] = [
+  { href: "/home", label: "หน้าหลัก", icon: HomeIcon },
   { href: "/sell", label: "ขายสินค้า", icon: CartIcon },
-  { href: "/search", label: "ค้นหาราคา", icon: SearchIcon },
-  { href: "/income", label: "รายรับ", icon: IncomeIcon },
-  { href: "/bills", label: "บิลซื้อ", icon: BillsIcon },
+  { href: "/stock", label: "เช็คสต๊อก", icon: InventoryIcon },
+  { href: "/receive", label: "รับสินค้า", icon: TruckIcon },
   { href: "/more", label: "เมนู", icon: MoreIcon },
 ];

@@ -13,8 +13,9 @@
 - **ลูกค้า** — สมาชิกและแต้มสะสม
 - **การเงิน** — รายรับรายวัน, บัญชีรายรับ-รายจ่ายทั่วไป (ค่าน้ำไฟ ค่าเช่า ค่าแรง ฯลฯ), รายงานสรุปต้นทุน/กำไร
 - **จัดการร้าน** — สิทธิ์เจ้าของ/พนักงาน, หลายสาขา, audit log, แพ็กเกจการใช้งาน, แจ้งเตือนสินค้าใกล้หมดผ่าน Webhook
-- **มือถือ** — มือถือจะเข้าหน้าค้นหาราคา (`/search`) เป็นหน้าหลักแทนแดชบอร์ด มีปุ่มลัดไปบันทึกรายรับ-รายจ่าย
-  ปรับสต็อก และตัดของเสีย พร้อมใช้งานแบบ PWA (ติดตั้งลงหน้าจอได้ มีหน้าแสดงเมื่อออฟไลน์)
+- **มือถือ** — มือถือจะเข้าหน้าหลัก (`/home`) แทนแดชบอร์ด มีปุ่มใหญ่ไปขายหน้าร้าน, เช็คสต๊อก (`/stock`),
+  รับสินค้า (`/receive` — สแกนของเข้าสต๊อก บันทึกเป็นบิลซื้อให้อัตโนมัติ), รายรับ-รายจ่าย และ Admin (เจ้าของร้านเท่านั้น)
+  พร้อมใช้งานแบบ PWA (ติดตั้งลงหน้าจอได้ มีหน้าแสดงเมื่อออฟไลน์)
 
 Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + MariaDB/MySQL (`@prisma/adapter-mariadb`)
 
@@ -112,11 +113,12 @@ npx prisma migrate dev
 - `src/app/(protected)/` — หน้าจอหลังเข้าสู่ระบบ — responsive: sidebar บนเดสก์ท็อป, bottom nav บนมือถือ
   ในโค้ดชุดเดียวกัน
   - ขายและการเงิน: `sell`, `income`, `cashflow`, `reports`, `dashboard`
+  - มือถือ: `home` (หน้าหลัก), `stock` (เช็คสต๊อก), `receive` (รับสินค้า)
   - สินค้าและสต็อก: `inventory`, `catalog` (คลังสินค้ากลาง), `stock-take`, `write-off`, `labels`, `search`
   - ซื้อสินค้าและลูกค้า: `suppliers`, `bills` (บิลซื้อ/ใบสั่งซื้อ), `customers`
   - จัดการร้าน (เฉพาะเจ้าของ): `settings`, `staff`, `branches`, `billing`, `audit-log`
   - `more` — เมนูรวมบนมือถือ
-- `src/proxy.ts` — ตรวจ session และพามือถือ (เช็กจาก User-Agent) ไปหน้า `/search`
+- `src/proxy.ts` — ตรวจ session และพามือถือ (เช็กจาก User-Agent) ไปหน้า `/home` (`/dashboard?full=1` เปิดแดชบอร์ดเต็มบนมือถือ)
 - `src/lib/` — Prisma client, session/auth, query helpers, QR พร้อมเพย์ (`promptpay.ts`), แพ็กเกจ (`plan.ts`), audit log
 - `public/sw.js`, `public/manifest.webmanifest` — service worker และ manifest สำหรับ PWA/ออฟไลน์
 - `prisma/schema.prisma` — โมเดลข้อมูล (multi-tenant ด้วย `storeId` ทุกตาราง)

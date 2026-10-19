@@ -24,7 +24,7 @@ import {
 } from "@/components/icons";
 
 const DESKTOP_LINKS = [
-  { href: "/dashboard", label: "แดชบอร์ด", desc: "ภาพรวมร้านค้าและยอดขาย", icon: DashboardIcon },
+  { href: "/dashboard?full=1", label: "แดชบอร์ด", desc: "ภาพรวมร้านค้าและยอดขาย", icon: DashboardIcon },
   { href: "/inventory", label: "คลังสินค้า", desc: "จัดการสต๊อกและราคาสินค้า", icon: InventoryIcon },
   { href: "/catalog", label: "คลังสินค้ากลาง", desc: "เลือกสินค้าร้านชำจากฐานข้อมูลกลางเข้าร้าน", icon: CatalogIcon },
   { href: "/suppliers", label: "เทียบราคาซัพพลายเออร์", desc: "หาต้นทุนที่ถูกที่สุด", icon: CompareIcon },

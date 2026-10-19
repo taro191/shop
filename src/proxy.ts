@@ -22,6 +22,10 @@ const PROTECTED_PREFIXES = [
   "/audit-log",
   "/cashflow",
   "/write-off",
+  "/catalog",
+  "/home",
+  "/stock",
+  "/receive",
 ];
 
 const AUTH_ONLY_PATHS = ["/login"];
@@ -43,10 +47,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Phones land on the mobile hub (product search + quick actions) instead of the
-  // analytics dashboard — every time, not just right after login, per spec.
-  if (pathname === "/dashboard" && session && isMobileUserAgent(request.headers.get("user-agent"))) {
-    return NextResponse.redirect(new URL("/search", request.url));
+  // Phones land on the mobile home screen (/home) instead of the analytics dashboard —
+  // every time, not just right after login. The home screen's Admin button opens the
+  // full dashboard with ?full=1, which skips this redirect.
+  if (
+    pathname === "/dashboard" &&
+    session &&
+    !request.nextUrl.searchParams.has("full") &&
+    isMobileUserAgent(request.headers.get("user-agent"))
+  ) {
+    return NextResponse.redirect(new URL("/home", request.url));
   }
 
   return NextResponse.next();

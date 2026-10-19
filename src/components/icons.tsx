@@ -287,3 +287,32 @@ export function CatalogIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function HomeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9v11a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9" />
+    </svg>
+  );
+}
+
+export function TruckIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M2 6a1 1 0 0 1 1-1h11v11H2z" />
+      <path d="M14 9h4l3 3.5V16h-7" />
+      <circle cx="6.5" cy="17.5" r="1.8" />
+      <circle cx="17.5" cy="17.5" r="1.8" />
+    </svg>
+  );
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="currentColor">
+      <path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6l-8-3z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  );
+}

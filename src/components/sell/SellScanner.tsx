@@ -16,7 +16,14 @@ const COOLDOWN_MS = 1200;
 /** Continuous scan-to-cart: unlike the read-only price-lookup scanner, this keeps the
  * camera running and fires onDetect for every new code, so a cashier can scan several
  * items back-to-back without touching the screen between them. */
-export function SellScanner({ onDetect }: { onDetect: (barcode: string) => void }) {
+export function SellScanner({
+  onDetect,
+  flashText = "เพิ่มลงตะกร้าแล้ว",
+}: {
+  onDetect: (barcode: string) => void;
+  /** Confirmation shown over the camera after each scan. */
+  flashText?: string;
+}) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -100,7 +107,7 @@ export function SellScanner({ onDetect }: { onDetect: (barcode: string) => void 
           {cameraState === "live" && <div className="pointer-events-none absolute inset-8 rounded-2xl border-2 border-accent/80" />}
           {flash && (
             <div className="absolute inset-x-3 bottom-3 rounded-lg bg-brand/95 px-3 py-2 text-center text-[12.5px] font-semibold text-white">
-              เพิ่มลงตะกร้าแล้ว
+              {flashText}
             </div>
           )}
         </div>
