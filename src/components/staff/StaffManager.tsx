@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { addStaffAction, setStaffActiveAction, type ActionState } from "@/app/(protected)/staff/actions";
 import { PlusIcon } from "@/components/icons";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { StaffEditForm } from "@/components/staff/StaffEditForm";
 
 type Branch = { id: string; name: string };
 type StaffRow = {
@@ -11,6 +13,7 @@ type StaffRow = {
   phone: string;
   role: "OWNER" | "STAFF";
   active: boolean;
+  branchId: string | null;
   branchName: string | null;
   isSelf: boolean;
 };
@@ -30,6 +33,7 @@ export function StaffManager({
   const [state, formAction, pending] = useActionState<ActionState, FormData>(addStaffAction, null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toggleErrors, setToggleErrors] = useState<Record<string, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   async function toggle(id: string, next: boolean) {
     setBusyId(id);
@@ -69,7 +73,7 @@ export function StaffManager({
           <div className="grid gap-3 sm:grid-cols-2">
             <input name="name" placeholder="ชื่อพนักงาน" className="rounded-lg border border-border px-3 py-2 text-sm" />
             <input name="phone" placeholder="เบอร์โทรศัพท์ (ใช้ล็อกอิน)" className="rounded-lg border border-border px-3 py-2 text-sm" />
-            <input name="password" type="password" placeholder="รหัสผ่านเริ่มต้น (ตั้งให้พนักงาน)" className="rounded-lg border border-border px-3 py-2 text-sm" />
+            <PasswordInput name="password" autoComplete="new-password" placeholder="รหัสผ่านเริ่มต้น (ตั้งให้พนักงาน)" className="w-full rounded-lg border border-border px-3 py-2 text-sm" />
             <select name="role" defaultValue="STAFF" className="rounded-lg border border-border px-3 py-2 text-sm">
               <option value="STAFF">พนักงาน</option>
               <option value="OWNER">เจ้าของร้าน</option>
@@ -99,37 +103,49 @@ export function StaffManager({
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white">
         {staff.map((s) => (
-          <div key={s.id} className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5 last:border-none">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[13.5px] font-medium text-foreground">{s.name}</span>
-                {s.isSelf && <span className="text-[11px] text-muted">(คุณ)</span>}
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${
-                    s.role === "OWNER" ? "bg-accent-tint text-accent-dark" : "bg-brand-light text-brand"
-                  }`}
+          <div key={s.id} className="border-b border-border last:border-none">
+            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13.5px] font-medium text-foreground">{s.name}</span>
+                  {s.isSelf && <span className="text-[11px] text-muted">(คุณ)</span>}
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${
+                      s.role === "OWNER" ? "bg-accent-tint text-accent-dark" : "bg-brand-light text-brand"
+                    }`}
+                  >
+                    {s.role === "OWNER" ? "เจ้าของร้าน" : "พนักงาน"}
+                  </span>
+                  {!s.active && <span className="rounded-full bg-danger-light px-2 py-0.5 text-[10.5px] font-semibold text-danger">ปิดใช้งาน</span>}
+                </div>
+                <div className="mt-0.5 text-[11.5px] text-muted">
+                  {s.phone} · {s.branchName ?? "ทุกสาขา"}
+                </div>
+                {toggleErrors[s.id] && <div className="mt-1 text-[11.5px] text-danger">{toggleErrors[s.id]}</div>}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingId(editingId === s.id ? null : s.id)}
+                  className="rounded-lg border border-border px-3 py-1.5 text-[12.5px] font-medium text-foreground/75 hover:bg-background"
                 >
-                  {s.role === "OWNER" ? "เจ้าของร้าน" : "พนักงาน"}
-                </span>
-                {!s.active && <span className="rounded-full bg-danger-light px-2 py-0.5 text-[10.5px] font-semibold text-danger">ปิดใช้งาน</span>}
+                  {editingId === s.id ? "ปิด" : "แก้ไข"}
+                </button>
+                {!s.isSelf && (
+                  <button
+                    type="button"
+                    onClick={() => toggle(s.id, !s.active)}
+                    disabled={busyId === s.id}
+                    className={`shrink-0 rounded-lg border px-3 py-1.5 text-[12.5px] font-medium disabled:opacity-50 ${
+                      s.active ? "border-danger/30 text-danger hover:bg-danger-light" : "border-brand/30 text-brand hover:bg-brand-light"
+                    }`}
+                  >
+                    {busyId === s.id ? "..." : s.active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
+                  </button>
+                )}
               </div>
-              <div className="mt-0.5 text-[11.5px] text-muted">
-                {s.phone} · {s.branchName ?? "ทุกสาขา"}
-              </div>
-              {toggleErrors[s.id] && <div className="mt-1 text-[11.5px] text-danger">{toggleErrors[s.id]}</div>}
             </div>
-            {!s.isSelf && (
-              <button
-                type="button"
-                onClick={() => toggle(s.id, !s.active)}
-                disabled={busyId === s.id}
-                className={`shrink-0 rounded-lg border px-3 py-1.5 text-[12.5px] font-medium disabled:opacity-50 ${
-                  s.active ? "border-danger/30 text-danger hover:bg-danger-light" : "border-brand/30 text-brand hover:bg-brand-light"
-                }`}
-              >
-                {busyId === s.id ? "..." : s.active ? "ปิดใช้งาน" : "เปิดใช้งาน"}
-              </button>
-            )}
+            {editingId === s.id && <StaffEditForm staff={s} branches={branches} onDone={() => setEditingId(null)} />}
           </div>
         ))}
       </div>

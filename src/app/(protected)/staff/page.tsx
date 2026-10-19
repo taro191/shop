@@ -33,6 +33,7 @@ export default async function StaffPage() {
             phone: s.phone,
             role: s.role,
             active: s.active,
+            branchId: s.branchId,
             branchName: s.branch?.name ?? null,
             isSelf: s.id === user.id,
           }))}

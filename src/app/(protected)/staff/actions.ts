@@ -7,7 +7,7 @@ import { requireOwnerSession, hashPassword } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { planLimits } from "@/lib/plan";
 
-export type ActionState = { error?: string } | null;
+export type ActionState = { error?: string; ok?: boolean } | null;
 
 const addSchema = z.object({
   name: z.string().trim().min(1, "กรุณากรอกชื่อพนักงาน"),
@@ -114,4 +114,90 @@ export async function setStaffActiveAction(userId: string, active: boolean): Pro
 
   revalidatePath("/staff");
   return null;
+}
+
+const editSchema = z.object({
+  userId: z.string().min(1),
+  name: z.string().trim().min(1, "กรุณากรอกชื่อพนักงาน"),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^0\d{8,9}$/, "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง"),
+  role: z.enum(["OWNER", "STAFF"]),
+  branchId: z.string().trim().optional(),
+  newPassword: z.string().min(8, "รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร").optional(),
+});
+
+/** Owner edits a staff account: name, login phone, role, branch, and optionally sets a
+ * new password (e.g. when staff forget theirs). Owners can't change their own role,
+ * and the store must keep at least one active owner. */
+export async function updateStaffAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const { session, user } = await requireOwnerSession();
+  if (!session || !user) return { error: "เฉพาะเจ้าของร้านเท่านั้นที่จัดการพนักงานได้" };
+
+  const parsed = editSchema.safeParse({
+    userId: formData.get("userId"),
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    role: formData.get("role") || "STAFF",
+    branchId: formData.get("branchId") || undefined,
+    newPassword: formData.get("newPassword") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+  const data = parsed.data;
+
+  const target = await prisma.user.findFirst({ where: { id: data.userId, storeId: session.storeId } });
+  if (!target) return { error: "ไม่พบพนักงานนี้" };
+
+  if (data.role !== target.role) {
+    if (target.id === user.id) return { error: "เปลี่ยนสิทธิ์ของบัญชีตัวเองไม่ได้" };
+    if (target.role === "OWNER" && target.active) {
+      const activeOwners = await prisma.user.count({ where: { storeId: session.storeId, role: "OWNER", active: true } });
+      if (activeOwners <= 1) return { error: "ต้องมีเจ้าของร้านที่ใช้งานอยู่อย่างน้อย 1 คน" };
+    }
+  }
+
+  if (data.phone !== target.phone) {
+    const taken = await prisma.user.findUnique({ where: { phone: data.phone } });
+    if (taken) return { error: "เบอร์โทรศัพท์นี้มีการใช้งานแล้ว" };
+  }
+
+  let branchId: string | null = null;
+  if (data.branchId) {
+    const branch = await prisma.branch.findFirst({ where: { id: data.branchId, storeId: session.storeId } });
+    if (!branch) return { error: "ไม่พบสาขาที่เลือก" };
+    branchId = branch.id;
+  }
+
+  await prisma.user.update({
+    where: { id: target.id },
+    data: {
+      name: data.name,
+      phone: data.phone,
+      role: data.role,
+      branchId,
+      ...(data.newPassword ? { passwordHash: await hashPassword(data.newPassword) } : {}),
+    },
+  });
+
+  const changes = [
+    data.name !== target.name && `ชื่อ "${target.name}" → "${data.name}"`,
+    data.phone !== target.phone && "เบอร์โทรศัพท์",
+    data.role !== target.role && `สิทธิ์เป็น${data.role === "OWNER" ? "เจ้าของร้าน" : "พนักงาน"}`,
+    branchId !== target.branchId && "สาขา",
+    data.newPassword && "ตั้งรหัสผ่านใหม่",
+  ].filter(Boolean);
+
+  await logAudit({
+    storeId: session.storeId,
+    userId: user.id,
+    userName: user.name,
+    action: "staff.update",
+    entityType: "User",
+    entityId: target.id,
+    summary: `แก้ไขข้อมูลพนักงาน "${data.name}"${changes.length ? `: ${changes.join(", ")}` : ""}`,
+  });
+
+  revalidatePath("/staff");
+  return { ok: true };
 }
