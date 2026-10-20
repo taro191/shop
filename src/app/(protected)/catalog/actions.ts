@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { barcodeOwner } from "@/lib/barcodes";
 
 /** The store product created from a catalog entry — enough for callers (POS cart,
  * receiving list, scanner) to use it right away without reloading. */
@@ -46,8 +47,8 @@ export async function addFromCatalogAction(_prev: CatalogAddState, formData: For
   if (!item) return { error: "ไม่พบสินค้านี้ในคลังสินค้ากลาง" };
 
   if (item.barcode) {
-    const existing = await prisma.product.findFirst({ where: { storeId: session.storeId, barcode: item.barcode } });
-    if (existing) return { error: `ร้านมีสินค้าบาร์โค้ดนี้แล้ว ("${existing.name}")` };
+    const owner = await barcodeOwner(session.storeId, item.barcode);
+    if (owner) return { error: `ร้านมีสินค้าบาร์โค้ดนี้แล้ว ("${owner}")` };
   }
 
   const product = await prisma.product.create({

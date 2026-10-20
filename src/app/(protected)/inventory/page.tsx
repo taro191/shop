@@ -10,6 +10,7 @@ import { formatBaht } from "@/lib/format";
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS } from "@/lib/constants";
 import Link from "next/link";
 import { CatalogFallback } from "@/components/catalog/CatalogFallback";
+import { formatStock } from "@/lib/packs";
 
 export default async function InventoryPage({
   searchParams,
@@ -26,8 +27,9 @@ export default async function InventoryPage({
     where: {
       storeId: user.storeId,
       ...(category !== "ทั้งหมด" ? { category } : {}),
-      ...(q ? { OR: [{ name: { contains: q } }, { barcode: q }] } : {}),
+      ...(q ? { OR: [{ name: { contains: q } }, { barcode: q }, { packs: { some: { barcode: q } } }] } : {}),
     },
+    include: { packs: { select: { name: true, size: true } } },
     orderBy: { name: "asc" },
   });
 
@@ -96,14 +98,15 @@ export default async function InventoryPage({
             const status = productStockStatus(p.quantity);
             const expiry = expiryStatus(p.expiresAt);
             return (
-              <div
+              <Link
                 key={p.id}
-                className="flex flex-col gap-1 border-t border-border px-6 py-3.5 first:border-none sm:grid sm:grid-cols-[2fr_1.1fr_0.9fr_1fr_1fr_1fr] sm:items-center sm:gap-3"
+                href={`/inventory/${p.id}`}
+                className="flex flex-col gap-1 border-t border-border px-6 py-3.5 first:border-none hover:bg-background sm:grid sm:grid-cols-[2fr_1.1fr_0.9fr_1fr_1fr_1fr] sm:items-center sm:gap-3"
               >
                 <span className="text-[13.5px] font-medium text-foreground">{p.name}</span>
                 <span className="text-[12.5px] text-muted">{p.category}</span>
                 <span className="text-[13px] text-foreground/80">
-                  {p.quantity} {p.unit}
+                  {formatStock(p.quantity, p.unit, p.packs)}
                 </span>
                 <span className="text-[13px] text-muted">฿{formatBaht(p.costPrice)}</span>
                 <span className="text-[13px] font-semibold text-foreground">฿{formatBaht(p.sellPrice)}</span>
@@ -111,7 +114,7 @@ export default async function InventoryPage({
                   <span className={`w-fit rounded-md px-2.5 py-1 text-[11.5px] font-semibold ${status.className}`}>{status.text}</span>
                   {expiry && <span className={`w-fit rounded-md px-2.5 py-1 text-[11.5px] font-semibold ${expiry.className}`}>{expiry.text}</span>}
                 </div>
-              </div>
+              </Link>
             );
           })
         )}

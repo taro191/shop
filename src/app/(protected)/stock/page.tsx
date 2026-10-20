@@ -8,6 +8,7 @@ import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
 import { addDays } from "@/lib/date";
+import { formatStock } from "@/lib/packs";
 
 const VIEWS = ["ใกล้หมด", "ใกล้หมดอายุ", "ทั้งหมด"];
 
@@ -30,11 +31,12 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
     prisma.product.findMany({
       where: {
         storeId,
-        ...(q ? { OR: [{ name: { contains: q } }, { barcode: q }] } : {}),
+        ...(q ? { OR: [{ name: { contains: q } }, { barcode: q }, { packs: { some: { barcode: q } } }] } : {}),
         ...(view === "ใกล้หมด" ? { quantity: { lte: 8 } } : {}),
         ...(view === "ใกล้หมดอายุ" ? { quantity: { gt: 0 }, expiresAt: { lte: expirySoon } } : {}),
       },
       orderBy: view === "ใกล้หมดอายุ" ? { expiresAt: "asc" } : view === "ใกล้หมด" ? { quantity: "asc" } : { name: "asc" },
+      include: { packs: { select: { name: true, size: true } } },
       take: 200,
     }),
   ]);
@@ -75,7 +77,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                   </div>
                 </div>
                 <span className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-[12px] font-semibold ${stock.className}`}>
-                  {p.quantity} {p.unit}
+                  {formatStock(p.quantity, p.unit, p.packs)}
                 </span>
               </div>
             );

@@ -71,6 +71,7 @@ model Store {
   branches         Branch[]
   auditLogs        AuditLog[]
   cashEntries      CashEntry[]
+  productPacks     ProductPack[]
 }
 
 /** General cash-in/cash-out ledger — separate from IncomeTransaction (POS sales)
@@ -177,6 +178,7 @@ model Product {
   billLineItems     BillLineItem[]
   saleLineItems     SaleLineItem[]
   stockAdjustments  StockAdjustment[]
+  packs             ProductPack[]
 
   @@unique([storeId, barcode])
   @@index([storeId])
@@ -270,6 +272,28 @@ model LoyaltyEntry {
 
 /** A stock-take correction: system count vs. physically counted, with a reason.
  * Separate from ordinary sale/receiving movements so shrinkage is visible on its own. */
+/// A packaging unit of a product (ลัง = 24 ขวด, แพ็ค = 10 ห่อ). Stock is always kept
+/// in the product's base unit; packs only convert quantities when receiving, selling
+/// and counting stock, and break stock down for display ("2 ลัง 10 ขวด").
+model ProductPack {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  /// Base units per pack.
+  size      Int
+  /// The pack's own barcode (a case usually has a different code from a single item).
+  barcode   String?
+  /// Price when sold as a whole pack; null = size × the product's sellPrice.
+  sellPrice Float?
+  createdAt DateTime @default(now())
+
+  @@unique([storeId, barcode])
+  @@index([productId])
+}
+
 model StockAdjustment {
   id        String   @id @default(cuid())
   storeId   String
@@ -294,10 +318,15 @@ model SaleLineItem {
   transaction   IncomeTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   productId     String
   product       Product           @relation(fields: [productId], references: [id])
+  /// Always in base units (Product.unit) so cost and stock maths stay per base unit;
+  /// unitPrice is the effective price per base unit.
   quantity      Int
   unitPrice     Float
   unitCost      Float
   subtotal      Float
+  /// Set when sold by the pack (ลัง/แพ็ค): its name and how many packs, for receipts.
+  packName      String?
+  packQty       Int?
 
   @@index([transactionId])
   @@index([productId])
@@ -339,6 +368,9 @@ model BillLineItem {
   /// received manually since qtyLabel alone can't be parsed reliably back to a number.
   quantity  Int?
   unit      String?
+  /// Base units (Product.unit) per `unit`, e.g. 24 when receiving Sponsor by the
+  /// case. Stock is incremented by quantity * unitSize; unitPrice is per `unit`.
+  unitSize  Int          @default(1)
   unitPrice Float
   subtotal  Float
 

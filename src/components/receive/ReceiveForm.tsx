@@ -7,10 +7,15 @@ import { TrashIcon } from "@/components/icons";
 import { quickReceiveAction, type QuickReceiveInput } from "@/app/(protected)/receive/actions";
 import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import type { AddedProduct } from "@/app/(protected)/catalog/actions";
+import { formatStock } from "@/lib/packs";
 
-type ProductRow = { id: string; name: string; unit: string; barcode: string | null; costPrice: number; quantity: number };
+type PackRow = { id: string; name: string; size: number; barcode: string | null };
+type ProductRow = { id: string; name: string; unit: string; barcode: string | null; costPrice: number; quantity: number; packs: PackRow[] };
 type SupplierRow = { id: string; name: string };
-type Line = { productId: string; qty: string; cost: string };
+/** One received line; packId is set when counted in ลัง/แพ็ค (qty and cost are then per pack). */
+type Line = { id: number; productId: string; packId: string | null; qty: string; cost: string };
+
+let nextLineId = 1;
 
 export function ReceiveForm({ products: storeProducts, suppliers }: { products: ProductRow[]; suppliers: SupplierRow[] }) {
   const router = useRouter();
@@ -31,13 +36,24 @@ export function ReceiveForm({ products: storeProducts, suppliers }: { products: 
   const [pending, startTransition] = useTransition();
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
-  const byBarcode = useMemo(() => new Map(products.filter((p) => p.barcode).map((p) => [p.barcode!, p])), [products]);
+  // Product and pack barcodes: scanning a case's barcode adds one case.
+  const byBarcode = useMemo(() => {
+    const map = new Map<string, { product: ProductRow; pack: PackRow | null }>();
+    for (const p of products) {
+      if (p.barcode) map.set(p.barcode, { product: p, pack: null });
+      for (const pack of p.packs) if (pack.barcode) map.set(pack.barcode, { product: p, pack });
+    }
+    return map;
+  }, [products]);
 
-  const addProduct = useCallback((p: ProductRow) => {
+  const addProduct = useCallback((p: ProductRow, pack: PackRow | null = null) => {
     setMessage(null);
     setLines((cur) => {
-      const i = cur.findIndex((l) => l.productId === p.id);
-      if (i === -1) return [{ productId: p.id, qty: "1", cost: String(p.costPrice) }, ...cur];
+      const i = cur.findIndex((l) => l.productId === p.id && l.packId === (pack?.id ?? null));
+      if (i === -1) {
+        const cost = String(Math.round(p.costPrice * (pack?.size ?? 1) * 100) / 100);
+        return [{ id: nextLineId++, productId: p.id, packId: pack?.id ?? null, qty: "1", cost }, ...cur];
+      }
       const next = [...cur];
       next[i] = { ...next[i], qty: String((Number(next[i].qty) || 0) + 1) };
       return next;
@@ -46,10 +62,10 @@ export function ReceiveForm({ products: storeProducts, suppliers }: { products: 
 
   const onScan = useCallback(
     (code: string) => {
-      const p = byBarcode.get(code);
-      if (p) {
+      const hit = byBarcode.get(code);
+      if (hit) {
         setUnknownCode(null);
-        addProduct(p);
+        addProduct(hit.product, hit.pack);
       } else {
         setUnknownCode(code);
       }
@@ -64,8 +80,9 @@ export function ReceiveForm({ products: storeProducts, suppliers }: { products: 
   }, [products, query]);
 
   function addFromCatalog(product: AddedProduct) {
-    setPulled((cur) => [...cur, product]);
-    addProduct(product);
+    const row = { ...product, packs: [] };
+    setPulled((cur) => [...cur, row]);
+    addProduct(row);
     setUnknownCode(null);
     setQuery("");
     router.refresh();
@@ -73,19 +90,29 @@ export function ReceiveForm({ products: storeProducts, suppliers }: { products: 
 
   const total = lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.cost) || 0), 0);
 
-  function update(productId: string, patch: Partial<Line>) {
-    setLines((cur) => cur.map((l) => (l.productId === productId ? { ...l, ...patch } : l)));
+  function update(id: number, patch: Partial<Line>) {
+    setLines((cur) => cur.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  }
+
+  /** Switches a line between single units and a pack, re-pricing the cost to match. */
+  function changeUnit(line: Line, packId: string | null) {
+    const p = byId.get(line.productId)!;
+    const oldSize = p.packs.find((x) => x.id === line.packId)?.size ?? 1;
+    const newSize = p.packs.find((x) => x.id === packId)?.size ?? 1;
+    const perUnit = (Number(line.cost) || 0) / oldSize;
+    update(line.id, { packId, cost: String(Math.round(perUnit * newSize * 100) / 100) });
   }
 
   function submit() {
     const lineItems: QuickReceiveInput["lineItems"] = [];
     for (const l of lines) {
       const p = byId.get(l.productId)!;
+      const pack = p.packs.find((x) => x.id === l.packId) ?? null;
       const quantity = Math.floor(Number(l.qty));
       const unitPrice = Number(l.cost);
       if (!quantity || quantity <= 0) return setError(`กรุณากรอกจำนวนของ "${p.name}"`);
       if (!Number.isFinite(unitPrice) || unitPrice < 0) return setError(`ราคาทุนของ "${p.name}" ไม่ถูกต้อง`);
-      lineItems.push({ productId: p.id, quantity, unit: p.unit, unitPrice });
+      lineItems.push({ productId: p.id, quantity, unit: pack?.name ?? p.unit, packId: pack?.id, unitPrice });
     }
     setError(null);
     startTransition(async () => {
@@ -155,7 +182,7 @@ export function ReceiveForm({ products: storeProducts, suppliers }: { products: 
               >
                 <span className="truncate text-[13px] text-foreground">{p.name}</span>
                 <span className="shrink-0 text-[11.5px] text-muted">
-                  มี {p.quantity} {p.unit}
+                  มี {formatStock(p.quantity, p.unit, p.packs)}
                 </span>
               </button>
             ))}
@@ -173,45 +200,70 @@ export function ReceiveForm({ products: storeProducts, suppliers }: { products: 
         ) : (
           lines.map((l) => {
             const p = byId.get(l.productId)!;
+            const pack = p.packs.find((x) => x.id === l.packId) ?? null;
+            const qty = Math.floor(Number(l.qty)) || 0;
             return (
-              <div key={l.productId} className="border-t border-border px-4 py-3 first:border-none">
+              <div key={l.id} className="border-t border-border px-4 py-3 first:border-none">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="truncate text-[13px] font-medium text-foreground">{p.name}</div>
                     <div className="text-[11px] text-muted">
-                      คงเหลือตอนนี้ {p.quantity} {p.unit}
+                      คงเหลือตอนนี้ {formatStock(p.quantity, p.unit, p.packs)}
+                      {pack && qty > 0 && (
+                        <span className="font-semibold text-brand">
+                          {" "}
+                          · รับเพิ่ม {(qty * pack.size).toLocaleString("th-TH")} {p.unit}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
                     type="button"
                     aria-label="ลบรายการ"
-                    onClick={() => setLines((cur) => cur.filter((x) => x.productId !== l.productId))}
+                    onClick={() => setLines((cur) => cur.filter((x) => x.id !== l.id))}
                     className="p-1 text-muted"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className={`mt-2 grid gap-2 ${p.packs.length > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+                  {p.packs.length > 0 && (
+                    <label className="text-[11px] text-muted">
+                      รับเป็น
+                      <select
+                        value={l.packId ?? ""}
+                        onChange={(e) => changeUnit(l, e.target.value || null)}
+                        className="mt-0.5 w-full rounded-[8px] border border-border bg-white px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-brand"
+                      >
+                        <option value="">{p.unit}</option>
+                        {p.packs.map((x) => (
+                          <option key={x.id} value={x.id}>
+                            {x.name} ({x.size} {p.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
                   <label className="text-[11px] text-muted">
-                    จำนวน ({p.unit})
+                    จำนวน ({pack?.name ?? p.unit})
                     <input
                       type="number"
                       inputMode="numeric"
                       min={1}
                       value={l.qty}
-                      onChange={(e) => update(l.productId, { qty: e.target.value })}
+                      onChange={(e) => update(l.id, { qty: e.target.value })}
                       className="mt-0.5 w-full rounded-[8px] border border-border px-2.5 py-1.5 text-[13px] text-foreground outline-none focus:border-brand"
                     />
                   </label>
                   <label className="text-[11px] text-muted">
-                    ราคาทุน/หน่วย (บาท)
+                    ทุน/{pack?.name ?? p.unit} (บาท)
                     <input
                       type="number"
                       inputMode="decimal"
                       min={0}
                       step="0.01"
                       value={l.cost}
-                      onChange={(e) => update(l.productId, { cost: e.target.value })}
+                      onChange={(e) => update(l.id, { cost: e.target.value })}
                       className="mt-0.5 w-full rounded-[8px] border border-border px-2.5 py-1.5 text-[13px] text-foreground outline-none focus:border-brand"
                     />
                   </label>

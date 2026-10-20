@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BarcodeIcon } from "@/components/icons";
 import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { canUseCamera, createBarcodeReader } from "@/lib/barcode-detector";
+import { formatBaht } from "@/lib/format";
 
 type LookupResult = {
   found: boolean;
@@ -14,6 +15,8 @@ type LookupResult = {
     sellPrice: number;
     barcode: string | null;
     quantity: number;
+    stockText: string;
+    otherPrices: { label: string; price: number }[];
     statusText: string;
     statusClassName: string;
   };
@@ -113,8 +116,18 @@ export function BarcodeScanner() {
             <div className="mb-3.5 font-display text-[17px] font-semibold text-foreground">{result.product.name}</div>
             <div className="font-display text-[38px] font-bold text-foreground">฿{result.product.sellPrice}</div>
             <div className="mb-4 mt-1.5 text-xs text-muted">ราคาขายหน้าร้าน · หน่วยละ{result.product.unit}</div>
+            {result.product.otherPrices.length > 0 && (
+              <div className="mx-auto mb-4 flex max-w-[280px] flex-col gap-1 rounded-xl bg-background px-4 py-2.5 text-[12.5px]">
+                {result.product.otherPrices.map((o) => (
+                  <div key={o.label} className="flex justify-between gap-3">
+                    <span className="text-muted">{o.label}</span>
+                    <span className="font-semibold text-foreground">฿{formatBaht(o.price)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className={`mb-5 inline-block rounded-lg px-3 py-1.5 text-[11.5px] font-semibold ${result.product.statusClassName}`}>
-              {result.product.statusText}
+              {result.product.statusText} · เหลือ {result.product.stockText}
             </div>
           </>
         ) : (

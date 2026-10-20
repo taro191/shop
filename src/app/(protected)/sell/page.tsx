@@ -11,7 +11,16 @@ export default async function SellPage() {
     prisma.product.findMany({
       where: { storeId: user.storeId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, unit: true, category: true, sellPrice: true, quantity: true, barcode: true },
+      select: {
+        id: true,
+        name: true,
+        unit: true,
+        category: true,
+        sellPrice: true,
+        quantity: true,
+        barcode: true,
+        packs: { select: { id: true, name: true, size: true, barcode: true, sellPrice: true }, orderBy: { size: "asc" } },
+      },
     }),
     prisma.customer.findMany({
       where: { storeId: user.storeId },

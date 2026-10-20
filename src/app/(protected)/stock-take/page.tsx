@@ -12,7 +12,14 @@ export default async function StockTakePage() {
     prisma.product.findMany({
       where: { storeId: user.storeId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, unit: true, category: true, quantity: true },
+      select: {
+        id: true,
+        name: true,
+        unit: true,
+        category: true,
+        quantity: true,
+        packs: { select: { id: true, name: true, size: true }, orderBy: { size: "desc" } },
+      },
     }),
     prisma.stockAdjustment.findMany({
       where: { storeId: user.storeId },

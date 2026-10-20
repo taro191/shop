@@ -4,12 +4,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { formatStock, packPrice } from "@/lib/packs";
 
 const checkoutSchema = z.object({
   items: z
     .array(
       z.object({
         productId: z.string().min(1),
+        /** Sold by this pack (ลัง/แพ็ค): quantity is a number of packs. */
+        packId: z.string().min(1).optional(),
         quantity: z.number().int().positive(),
       })
     )
@@ -53,44 +56,77 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
     return { ok: false, error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   }
 
-  // Merge duplicate productIds (e.g. the same barcode scanned twice) before touching stock.
-  const merged = new Map<string, number>();
+  // Merge duplicate lines (e.g. the same barcode scanned twice) before touching stock.
+  // A product sold both singly and by the pack stays two lines.
+  const merged = new Map<string, { productId: string; packId: string | null; quantity: number }>();
   for (const item of parsed.data.items) {
-    merged.set(item.productId, (merged.get(item.productId) ?? 0) + item.quantity);
+    const key = `${item.productId}:${item.packId ?? ""}`;
+    const existing = merged.get(key);
+    merged.set(key, { productId: item.productId, packId: item.packId ?? null, quantity: (existing?.quantity ?? 0) + item.quantity });
   }
 
   try {
     const transaction = await prisma.$transaction(async (tx) => {
       const products = await tx.product.findMany({
-        where: { id: { in: [...merged.keys()] }, storeId: session.storeId },
+        where: { id: { in: [...new Set([...merged.values()].map((m) => m.productId))] }, storeId: session.storeId },
+        include: { packs: true },
       });
       const productMap = new Map(products.map((p) => [p.id, p]));
 
       let subtotal = 0;
-      const lineItemsData: { productId: string; quantity: number; unitPrice: number; unitCost: number; subtotal: number }[] = [];
+      const lineItemsData: {
+        productId: string;
+        quantity: number;
+        unitPrice: number;
+        unitCost: number;
+        subtotal: number;
+        packName: string | null;
+        packQty: number | null;
+      }[] = [];
       const lines: { name: string; unit: string; quantity: number; unitPrice: number; subtotal: number }[] = [];
+      // Stock to take per product, in base units, across its single and pack lines.
+      const demand = new Map<string, number>();
 
-      for (const [productId, quantity] of merged) {
+      for (const { productId, packId, quantity } of merged.values()) {
         const product = productMap.get(productId);
         if (!product) throw new CheckoutError("มีสินค้าบางรายการที่ไม่พบในระบบ กรุณารีเฟรชและลองใหม่");
-        const lineSubtotal = product.sellPrice * quantity;
+        const pack = packId ? product.packs.find((p) => p.id === packId) : null;
+        if (packId && !pack) throw new CheckoutError(`หน่วยบรรจุของ "${product.name}" ถูกลบไปแล้ว กรุณารีเฟรชและลองใหม่`);
+
+        const baseQty = quantity * (pack?.size ?? 1);
+        const price = pack ? packPrice(pack, product.sellPrice) : product.sellPrice;
+        const lineSubtotal = price * quantity;
         subtotal += lineSubtotal;
-        lineItemsData.push({ productId, quantity, unitPrice: product.sellPrice, unitCost: product.costPrice, subtotal: lineSubtotal });
-        lines.push({ name: product.name, unit: product.unit, quantity, unitPrice: product.sellPrice, subtotal: lineSubtotal });
+        demand.set(productId, (demand.get(productId) ?? 0) + baseQty);
+        lineItemsData.push({
+          productId,
+          quantity: baseQty,
+          unitPrice: lineSubtotal / baseQty,
+          unitCost: product.costPrice,
+          subtotal: lineSubtotal,
+          packName: pack?.name ?? null,
+          packQty: pack ? quantity : null,
+        });
+        lines.push({
+          name: product.name,
+          unit: pack ? `${pack.name} (${pack.size} ${product.unit})` : product.unit,
+          quantity,
+          unitPrice: price,
+          subtotal: lineSubtotal,
+        });
       }
 
       // Atomic, race-safe stock decrement: the WHERE clause re-checks quantity at
       // write time, so two simultaneous checkouts can never oversell the same item.
-      for (const [productId, quantity] of merged) {
+      for (const [productId, quantity] of demand) {
         const result = await tx.product.updateMany({
           where: { id: productId, storeId: session.storeId, quantity: { gte: quantity } },
           data: { quantity: { decrement: quantity } },
         });
         if (result.count === 0) {
           const product = productMap.get(productId);
-          throw new CheckoutError(
-            `${product?.name ?? "สินค้า"} มีไม่พอในสต๊อก (เหลือ ${product?.quantity ?? 0} ${product?.unit ?? ""})`
-          );
+          const left = product ? formatStock(product.quantity, product.unit, product.packs) : "0";
+          throw new CheckoutError(`${product?.name ?? "สินค้า"} มีไม่พอในสต๊อก (เหลือ ${left})`);
         }
       }
 
@@ -141,7 +177,7 @@ export async function checkoutSale(input: CheckoutInput): Promise<CheckoutResult
         }
       }
 
-      const summary = lines.map((l) => `${l.name} x${l.quantity}`).join(", ");
+      const summary = lines.map((l, i) => `${l.name} x${l.quantity}${lineItemsData[i].packName ? ` ${lineItemsData[i].packName}` : ""}`).join(", ");
       const created = await tx.incomeTransaction.create({
         data: {
           storeId: session.storeId,

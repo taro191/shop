@@ -13,6 +13,7 @@ import { buildPromptPayPayload } from "@/lib/promptpay";
 import { CartIcon, PlusIcon, MinusIcon, TrashIcon, CheckCircleIcon } from "@/components/icons";
 import { formatBaht, formatThaiTime, formatThaiDate } from "@/lib/format";
 import { productStockStatus } from "@/lib/status";
+import { packPrice } from "@/lib/packs";
 
 type ProductRow = {
   id: string;
@@ -22,11 +23,22 @@ type ProductRow = {
   sellPrice: number;
   quantity: number;
   barcode: string | null;
+  packs: PackRow[];
 };
+type PackRow = { id: string; name: string; size: number; barcode: string | null; sellPrice: number | null };
 
 type Customer = { id: string; name: string; phone: string; points: number };
 type Branch = { id: string; name: string };
-type CartLine = { productId: string; name: string; unit: string; sellPrice: number; stock: number; qty: number };
+/** A cart line: the product sold singly, or by one of its packs (qty = number of packs). */
+type CartLine = {
+  key: string;
+  productId: string;
+  packId: string | null;
+  name: string;
+  unit: string;
+  sellPrice: number;
+  qty: number;
+};
 type Receipt = Extract<CheckoutResult, { ok: true }>["receipt"];
 
 export function SellCart({
@@ -63,16 +75,22 @@ export function SellCart({
   const [redeemInput, setRedeemInput] = useState("");
   const [branchId, setBranchId] = useState<string | null>(defaultBranchId);
 
+  // Product and pack barcodes: scanning a case's barcode sells the whole case.
   const byBarcode = useMemo(() => {
-    const map = new Map<string, ProductRow>();
-    for (const p of products) if (p.barcode) map.set(p.barcode, p);
+    const map = new Map<string, { product: ProductRow; pack: PackRow | null }>();
+    for (const p of products) {
+      if (p.barcode) map.set(p.barcode, { product: p, pack: null });
+      for (const pack of p.packs) if (pack.barcode) map.set(pack.barcode, { product: p, pack });
+    }
     return map;
   }, [products]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return products.slice(0, 30);
-    return products.filter((p) => p.name.toLowerCase().includes(q) || p.barcode === q).slice(0, 30);
+    return products
+      .filter((p) => p.name.toLowerCase().includes(q) || p.barcode === q || p.packs.some((x) => x.barcode === q))
+      .slice(0, 30);
   }, [products, query]);
 
   const matchedCustomers = useMemo(() => {
@@ -98,53 +116,56 @@ export function SellCart({
     }
   }, [promptPayId, totalAmount]);
 
-  function addToCart(product: ProductRow, qty = 1) {
+  function addToCart(product: ProductRow, pack: PackRow | null = null) {
     setError(null);
+    const key = `${product.id}:${pack?.id ?? ""}`;
     setCart((prev) => {
       const next = new Map(prev);
-      const existing = next.get(product.id);
-      next.set(product.id, {
+      const existing = next.get(key);
+      next.set(key, {
+        key,
         productId: product.id,
+        packId: pack?.id ?? null,
         name: product.name,
-        unit: product.unit,
-        sellPrice: product.sellPrice,
-        stock: product.quantity,
-        qty: (existing?.qty ?? 0) + qty,
+        unit: pack ? `${pack.name} (${pack.size} ${product.unit})` : product.unit,
+        sellPrice: pack ? packPrice(pack, product.sellPrice) : product.sellPrice,
+        qty: (existing?.qty ?? 0) + 1,
       });
       return next;
     });
   }
 
-  function setLineQty(productId: string, qty: number) {
+  function setLineQty(key: string, qty: number) {
     setCart((prev) => {
       const next = new Map(prev);
       if (qty <= 0) {
-        next.delete(productId);
+        next.delete(key);
       } else {
-        const existing = next.get(productId);
-        if (existing) next.set(productId, { ...existing, qty });
+        const existing = next.get(key);
+        if (existing) next.set(key, { ...existing, qty });
       }
       return next;
     });
   }
 
   function handleScan(barcode: string) {
-    const product = byBarcode.get(barcode);
-    if (!product) {
+    const hit = byBarcode.get(barcode);
+    if (!hit) {
       setScanNotice(`ไม่พบสินค้าที่บาร์โค้ด ${barcode} ในร้าน`);
       setMissingCode(barcode);
       return;
     }
+    const { product, pack } = hit;
     setMissingCode(null);
-    addToCart(product);
-    setScanNotice(`เพิ่ม "${product.name}" ลงตะกร้าแล้ว`);
+    addToCart(product, pack);
+    setScanNotice(`เพิ่ม "${product.name}"${pack ? ` 1 ${pack.name}` : ""} ลงตะกร้าแล้ว`);
     setTimeout(() => setScanNotice((n) => (n?.includes(product.name) ? null : n)), 2000);
   }
 
   /** A product just pulled in from the shared catalog: put it in the cart right away and
    * refresh so it's also in the product list for later sales. */
   function addFromCatalog(product: AddedProduct) {
-    addToCart(product);
+    addToCart({ ...product, packs: [] });
     setMissingCode(null);
     setQuery("");
     setScanNotice(`เพิ่ม "${product.name}" เข้าร้านและลงตะกร้าแล้ว`);
@@ -165,7 +186,7 @@ export function SellCart({
     setError(null);
     startTransition(async () => {
       const result = await checkoutSale({
-        items: cartLines.map((l) => ({ productId: l.productId, quantity: l.qty })),
+        items: cartLines.map((l) => ({ productId: l.productId, packId: l.packId ?? undefined, quantity: l.qty })),
         method,
         customerId: customer?.id,
         pointsToRedeem: discountAmount,
@@ -294,30 +315,50 @@ export function SellCart({
               <div className="flex flex-col gap-2">
                 {filtered.map((p) => {
                   const status = productStockStatus(p.quantity);
-                  const inCart = cart.get(p.id)?.qty ?? 0;
+                  const inCart = cart.get(`${p.id}:`)?.qty ?? 0;
                   const disabled = p.quantity <= 0;
                   return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => addToCart(p)}
-                      className="flex items-center justify-between gap-3 rounded-[14px] border border-border bg-white px-4 py-3 text-left disabled:opacity-50"
-                    >
-                      <div className="min-w-0">
-                        <div className="truncate text-[13.5px] font-medium text-foreground">{p.name}</div>
-                        <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted">
-                          <span>฿{formatBaht(p.sellPrice)} / {p.unit}</span>
-                          <span className={`rounded px-1.5 py-0.5 font-semibold ${status.className}`}>{status.text}</span>
+                    <div key={p.id} className="overflow-hidden rounded-[14px] border border-border bg-white">
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => addToCart(p)}
+                        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left disabled:opacity-50"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate text-[13.5px] font-medium text-foreground">{p.name}</div>
+                          <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted">
+                            <span>฿{formatBaht(p.sellPrice)} / {p.unit}</span>
+                            <span className={`rounded px-1.5 py-0.5 font-semibold ${status.className}`}>{status.text}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        {inCart > 0 && <span className="rounded-full bg-brand-light px-2 py-0.5 text-[11.5px] font-semibold text-brand">×{inCart}</span>}
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white">
-                          <PlusIcon className="h-4 w-4" strokeWidth={2.3} />
-                        </span>
-                      </div>
-                    </button>
+                        <div className="flex shrink-0 items-center gap-2">
+                          {inCart > 0 && <span className="rounded-full bg-brand-light px-2 py-0.5 text-[11.5px] font-semibold text-brand">×{inCart}</span>}
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white">
+                            <PlusIcon className="h-4 w-4" strokeWidth={2.3} />
+                          </span>
+                        </div>
+                      </button>
+                      {p.packs.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 border-t border-border px-4 py-2">
+                          {p.packs.map((pack) => {
+                            const packInCart = cart.get(`${p.id}:${pack.id}`)?.qty ?? 0;
+                            return (
+                              <button
+                                key={pack.id}
+                                type="button"
+                                disabled={p.quantity < pack.size}
+                                onClick={() => addToCart(p, pack)}
+                                className="rounded-full border border-brand/40 px-2.5 py-1 text-[11.5px] font-semibold text-brand disabled:border-border disabled:text-muted"
+                              >
+                                + {pack.name} ({pack.size}) ฿{formatBaht(packPrice(pack, p.sellPrice))}
+                                {packInCart > 0 && ` ×${packInCart}`}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
                 {filtered.length === 0 && (
@@ -369,22 +410,22 @@ export function SellCart({
             ) : (
               <div className="flex flex-col gap-3">
                 {cartLines.map((l) => (
-                  <div key={l.productId} className="flex items-center gap-2.5">
+                  <div key={l.key} className="flex items-center gap-2.5">
                     <div className="min-w-0 flex-grow">
                       <div className="truncate text-[13px] font-medium text-foreground">{l.name}</div>
                       <div className="text-[11.5px] text-muted">฿{formatBaht(l.sellPrice)} / {l.unit}</div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <button type="button" onClick={() => setLineQty(l.productId, l.qty - 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-foreground/70">
+                      <button type="button" onClick={() => setLineQty(l.key, l.qty - 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-foreground/70">
                         <MinusIcon className="h-3.5 w-3.5" />
                       </button>
                       <span className="w-5 text-center text-[13px] font-medium tabular-nums">{l.qty}</span>
-                      <button type="button" onClick={() => setLineQty(l.productId, l.qty + 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-foreground/70">
+                      <button type="button" onClick={() => setLineQty(l.key, l.qty + 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-foreground/70">
                         <PlusIcon className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     <span className="w-16 shrink-0 text-right text-[13px] font-semibold text-foreground">฿{formatBaht(l.qty * l.sellPrice)}</span>
-                    <button type="button" onClick={() => setLineQty(l.productId, 0)} className="shrink-0 text-danger">
+                    <button type="button" onClick={() => setLineQty(l.key, 0)} className="shrink-0 text-danger">
                       <TrashIcon className="h-4 w-4" />
                     </button>
                   </div>

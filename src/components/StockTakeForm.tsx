@@ -2,11 +2,16 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { submitStockTake } from "@/app/(protected)/stock-take/actions";
+import { formatStock, sortPacks } from "@/lib/packs";
 
-type ProductRow = { id: string; name: string; unit: string; category: string; quantity: number };
+type PackRow = { id: string; name: string; size: number };
+type ProductRow = { id: string; name: string; unit: string; category: string; quantity: number; packs: PackRow[] };
 
 export function StockTakeForm({ products }: { products: ProductRow[] }) {
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
+  // For products with packs: what was typed per pack ("" key = loose units), so the
+  // count can be entered as "2 ลัง 10 ขวด" instead of multiplying by hand.
+  const [parts, setParts] = useState<Map<string, Record<string, string>>>(new Map());
   const [reason, setReason] = useState("");
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -33,6 +38,16 @@ export function StockTakeForm({ products }: { products: ProductRow[] }) {
     setCounts((prev) => new Map(prev).set(productId, n));
   }
 
+  function setPart(product: ProductRow, key: string, value: string) {
+    const next = { ...parts.get(product.id), [key]: value };
+    setParts((prev) => new Map(prev).set(product.id, next));
+    const total = sortPacks(product.packs).reduce(
+      (sum, pack) => sum + Math.max(0, Math.floor(Number(next[pack.id]) || 0)) * pack.size,
+      Math.max(0, Math.floor(Number(next[""]) || 0)),
+    );
+    setCounts((prev) => new Map(prev).set(product.id, total));
+  }
+
   function submit() {
     setError(null);
     setMessage(null);
@@ -50,6 +65,7 @@ export function StockTakeForm({ products }: { products: ProductRow[] }) {
       if (result.ok) {
         setMessage(`บันทึกการปรับปรุงสต๊อก ${result.changed} รายการแล้ว`);
         setCounts(new Map());
+        setParts(new Map());
         setReason("");
       } else {
         setError(result.error);
@@ -78,7 +94,7 @@ export function StockTakeForm({ products }: { products: ProductRow[] }) {
       {message && <div className="rounded-lg bg-brand-light px-3.5 py-2.5 text-[12.5px] text-brand">{message}</div>}
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white">
-        <div className="hidden grid-cols-[1.6fr_1fr_1fr_1fr] gap-3 border-b border-border px-5 py-2.5 text-[11.5px] text-muted sm:grid">
+        <div className="hidden grid-cols-[1.4fr_1fr_1.6fr_0.8fr] gap-3 border-b border-border px-5 py-2.5 text-[11.5px] text-muted sm:grid">
           <span>สินค้า</span>
           <span>ในระบบ</span>
           <span>นับได้จริง</span>
@@ -87,10 +103,11 @@ export function StockTakeForm({ products }: { products: ProductRow[] }) {
         {filtered.map((p) => {
           const counted = counts.get(p.id);
           const diff = counted !== undefined ? counted - p.quantity : 0;
+          const packs = sortPacks(p.packs);
           return (
             <div
               key={p.id}
-              className={`flex flex-col gap-2 border-t border-border px-5 py-3 first:border-none sm:grid sm:grid-cols-[1.6fr_1fr_1fr_1fr] sm:items-center sm:gap-3 ${
+              className={`flex flex-col gap-2 border-t border-border px-5 py-3 first:border-none sm:grid sm:grid-cols-[1.4fr_1fr_1.6fr_0.8fr] sm:items-center sm:gap-3 ${
                 diff !== 0 ? "bg-accent-light/40" : ""
               }`}
             >
@@ -98,19 +115,41 @@ export function StockTakeForm({ products }: { products: ProductRow[] }) {
                 <div className="text-[13px] font-medium text-foreground">{p.name}</div>
                 <div className="text-[11px] text-muted">{p.category}</div>
               </div>
-              <span className="text-[13px] text-muted">
-                {p.quantity} {p.unit}
-              </span>
-              <input
-                type="number"
-                min={0}
-                placeholder={String(p.quantity)}
-                value={counted ?? ""}
-                onChange={(e) => setCount(p.id, e.target.value)}
-                className="w-24 rounded-[8px] border border-border px-2.5 py-1.5 text-[13px] outline-none focus:border-brand"
-              />
+              <span className="text-[13px] text-muted">{formatStock(p.quantity, p.unit, packs)}</span>
+              {packs.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                  {[...packs, { id: "", name: p.unit, size: 1 }].map((pack) => (
+                    <label key={pack.id} className="flex items-center gap-1 text-[12px] text-muted">
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={parts.get(p.id)?.[pack.id] ?? ""}
+                        onChange={(e) => setPart(p, pack.id, e.target.value)}
+                        className="w-14 rounded-[8px] border border-border px-2 py-1.5 text-[13px] text-foreground outline-none focus:border-brand"
+                      />
+                      {pack.name}
+                    </label>
+                  ))}
+                  {counted !== undefined && (
+                    <span className="text-[11.5px] text-muted">
+                      = {counted.toLocaleString("th-TH")} {p.unit}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <input
+                  type="number"
+                  min={0}
+                  placeholder={String(p.quantity)}
+                  value={counted ?? ""}
+                  onChange={(e) => setCount(p.id, e.target.value)}
+                  className="w-24 rounded-[8px] border border-border px-2.5 py-1.5 text-[13px] outline-none focus:border-brand"
+                />
+              )}
               <span className={`text-[13px] font-semibold ${diff > 0 ? "text-brand" : diff < 0 ? "text-danger" : "text-muted"}`}>
-                {counted !== undefined ? (diff > 0 ? `+${diff}` : diff) : "—"}
+                {counted !== undefined ? `${diff > 0 ? "+" : ""}${diff} ${p.unit}` : "—"}
               </span>
             </div>
           );

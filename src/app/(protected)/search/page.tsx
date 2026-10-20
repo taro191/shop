@@ -8,6 +8,7 @@ import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { productStockStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
+import { formatStock } from "@/lib/packs";
 import { WalletIcon, ClipboardCheckIcon, AlertTriangleIcon } from "@/components/icons";
 
 const QUICK_ACTIONS = [
@@ -27,6 +28,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const products = q
     ? await prisma.product.findMany({
         where: { storeId: user.storeId, name: { contains: q } },
+        include: { packs: { select: { name: true, size: true } } },
         orderBy: { name: "asc" },
         take: 30,
       })
@@ -131,7 +133,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
                           <td className="px-3.5 py-2.5 text-right font-semibold text-foreground">฿{formatBaht(p.sellPrice)}</td>
                           <td className="px-3.5 py-2.5 text-right">
                             <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-[10.5px] font-semibold ${status.className}`}>
-                              {p.quantity} {p.unit}
+                              {formatStock(p.quantity, p.unit, p.packs)}
                             </span>
                           </td>
                         </tr>

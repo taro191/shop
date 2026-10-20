@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { barcodeOwner } from "@/lib/barcodes";
 
 export type ActionState = { error?: string } | null;
 
@@ -39,8 +40,8 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
 
   const barcode = parsed.data.barcode || null;
   if (barcode) {
-    const existing = await prisma.product.findFirst({ where: { storeId: session.storeId, barcode } });
-    if (existing) return { error: "มีสินค้าที่ใช้บาร์โค้ดนี้อยู่แล้ว" };
+    const owner = await barcodeOwner(session.storeId, barcode);
+    if (owner) return { error: `บาร์โค้ดนี้ใช้กับ "${owner}" อยู่แล้ว` };
   }
 
   const product = await prisma.product.create({
@@ -72,4 +73,108 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
   revalidatePath("/dashboard");
   revalidatePath("/search");
   return null;
+}
+
+export type PackResult = { ok: true } | { ok: false; error: string };
+
+const packSchema = z.object({
+  productId: z.string().min(1),
+  name: z.string().trim().min(1, "กรุณาเลือกหน่วยบรรจุ").max(30),
+  size: z.coerce.number().int("จำนวนต่อหน่วยบรรจุต้องเป็นจำนวนเต็ม").min(2, "จำนวนต่อหน่วยบรรจุต้องมากกว่า 1"),
+  barcode: z.string().trim().max(64).optional(),
+  sellPrice: z.coerce.number().min(0, "ราคาขายต้องไม่ติดลบ").optional(),
+});
+
+function revalidateProductPages(productId: string) {
+  for (const path of ["/inventory", `/inventory/${productId}`, "/stock", "/search", "/sell", "/receive", "/stock-take"]) {
+    revalidatePath(path);
+  }
+}
+
+/** Adds a packaging unit (ลัง, แพ็ค) to a product: how many base units it holds, and
+ * optionally its own barcode and whole-pack price. */
+export async function addPackAction(input: {
+  productId: string;
+  name: string;
+  size: string;
+  barcode?: string;
+  sellPrice?: string;
+}): Promise<PackResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
+
+  const parsed = packSchema.safeParse({
+    ...input,
+    barcode: input.barcode?.trim() || undefined,
+    sellPrice: input.sellPrice?.trim() || undefined,
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+
+  const product = await prisma.product.findFirst({
+    where: { id: parsed.data.productId, storeId: session.storeId },
+    include: { packs: true },
+  });
+  if (!product) return { ok: false, error: "ไม่พบสินค้านี้" };
+  if (parsed.data.name === product.unit) return { ok: false, error: `หน่วยบรรจุต้องไม่ซ้ำกับหน่วยนับ (${product.unit})` };
+  if (product.packs.some((p) => p.name === parsed.data.name)) {
+    return { ok: false, error: `สินค้านี้มีหน่วย "${parsed.data.name}" แล้ว ลบอันเดิมก่อนถ้าต้องการแก้` };
+  }
+
+  const barcode = parsed.data.barcode ?? null;
+  if (barcode) {
+    const owner = await barcodeOwner(session.storeId, barcode);
+    if (owner) return { ok: false, error: `บาร์โค้ดนี้ใช้กับ "${owner}" อยู่แล้ว` };
+  }
+
+  await prisma.productPack.create({
+    data: {
+      storeId: session.storeId,
+      productId: product.id,
+      name: parsed.data.name,
+      size: parsed.data.size,
+      barcode,
+      sellPrice: parsed.data.sellPrice ?? null,
+    },
+  });
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "product.pack_add",
+    entityType: "Product",
+    entityId: product.id,
+    summary: `เพิ่มหน่วยบรรจุ "${product.name}" 1 ${parsed.data.name} = ${parsed.data.size} ${product.unit}`,
+  });
+
+  revalidateProductPages(product.id);
+  return { ok: true };
+}
+
+export async function deletePackAction(packId: string): Promise<PackResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
+
+  const pack = await prisma.productPack.findFirst({
+    where: { id: packId, storeId: session.storeId },
+    include: { product: { select: { name: true, unit: true } } },
+  });
+  if (!pack) return { ok: false, error: "ไม่พบหน่วยบรรจุนี้" };
+
+  await prisma.productPack.delete({ where: { id: pack.id } });
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "product.pack_delete",
+    entityType: "Product",
+    entityId: pack.productId,
+    summary: `ลบหน่วยบรรจุ "${pack.product.name}" 1 ${pack.name} = ${pack.size} ${pack.product.unit}`,
+  });
+
+  revalidateProductPages(pack.productId);
+  return { ok: true };
 }

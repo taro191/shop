@@ -20,7 +20,15 @@ export default async function ReceivePage() {
     prisma.product.findMany({
       where: { storeId: user.storeId },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, unit: true, barcode: true, costPrice: true, quantity: true },
+      select: {
+        id: true,
+        name: true,
+        unit: true,
+        barcode: true,
+        costPrice: true,
+        quantity: true,
+        packs: { select: { id: true, name: true, size: true, barcode: true }, orderBy: { size: "desc" } },
+      },
     }),
     prisma.supplier.findMany({ where: { storeId: user.storeId }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
   ]);

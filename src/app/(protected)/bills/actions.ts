@@ -12,6 +12,9 @@ const lineItemSchema = z.object({
   productId: z.string().trim().min(1),
   quantity: z.number().int().positive(),
   unit: z.string().trim().min(1),
+  /** Received by this pack (ลัง/แพ็ค) of the product: quantity and unitPrice are per
+   * pack, and stock goes up by quantity × pack size. */
+  packId: z.string().trim().min(1).optional(),
   unitPrice: z.number().min(0),
 });
 
@@ -42,9 +45,20 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
   if (!supplier) return { ok: false, error: "ไม่พบซัพพลายเออร์ที่เลือก" };
 
   const productIds = parsed.data.lineItems.map((l) => l.productId);
-  const products = await prisma.product.findMany({ where: { id: { in: productIds }, storeId: session.storeId } });
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds }, storeId: session.storeId },
+    include: { packs: true },
+  });
   const productMap = new Map(products.map((p) => [p.id, p]));
   if (products.length !== new Set(productIds).size) return { ok: false, error: "มีสินค้าบางรายการที่ไม่พบในระบบ" };
+
+  const lines: (CreateBillInput["lineItems"][number] & { product: (typeof products)[number]; unitSize: number })[] = [];
+  for (const l of parsed.data.lineItems) {
+    const product = productMap.get(l.productId)!;
+    const pack = l.packId ? product.packs.find((p) => p.id === l.packId) : null;
+    if (l.packId && !pack) return { ok: false, error: `ไม่พบหน่วยบรรจุที่เลือกของ "${product.name}"` };
+    lines.push({ ...l, product, unit: pack ? pack.name : l.unit, unitSize: pack ? pack.size : 1 });
+  }
 
   const amount = parsed.data.lineItems.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
   const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
@@ -63,14 +77,14 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
         receivedAt: parsed.data.receivedNow ? new Date() : null,
         branchId: branch?.id ?? null,
         lineItems: {
-          create: parsed.data.lineItems.map((l) => {
-            const product = productMap.get(l.productId)!;
+          create: lines.map((l) => {
             return {
               productId: l.productId,
-              name: product.name,
-              qtyLabel: `${l.quantity} ${l.unit}`,
+              name: l.product.name,
+              qtyLabel: l.unitSize > 1 ? `${l.quantity} ${l.unit} (${l.quantity * l.unitSize} ${l.product.unit})` : `${l.quantity} ${l.unit}`,
               quantity: l.quantity,
               unit: l.unit,
+              unitSize: l.unitSize,
               unitPrice: l.unitPrice,
               subtotal: l.quantity * l.unitPrice,
             };
@@ -80,8 +94,8 @@ export async function createBill(input: CreateBillInput): Promise<CreateBillResu
     });
 
     if (parsed.data.receivedNow) {
-      for (const l of parsed.data.lineItems) {
-        await tx.product.update({ where: { id: l.productId }, data: { quantity: { increment: l.quantity } } });
+      for (const l of lines) {
+        await tx.product.update({ where: { id: l.productId }, data: { quantity: { increment: l.quantity * l.unitSize } } });
       }
     }
   });
@@ -121,7 +135,7 @@ export async function receiveBillAction(billId: string): Promise<ActionState> {
   await prisma.$transaction(async (tx) => {
     for (const li of bill.lineItems) {
       if (li.productId && li.quantity != null) {
-        await tx.product.update({ where: { id: li.productId }, data: { quantity: { increment: li.quantity } } });
+        await tx.product.update({ where: { id: li.productId }, data: { quantity: { increment: li.quantity * li.unitSize } } });
       }
     }
     await tx.purchaseBill.update({ where: { id: bill.id }, data: { status: "PENDING", receivedAt: new Date() } });
