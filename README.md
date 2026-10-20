@@ -89,6 +89,11 @@ Stack: Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · Prisma 7 + Ma
   หมวดยาใส่เฉพาะ**ยาสามัญประจำบ้าน**และอุปกรณ์ปฐมพยาบาล ซึ่งร้านค้าทั่วไปขายได้โดยไม่ต้องมีใบอนุญาตขายยา
   ห้ามเพิ่มยาอันตราย/ยาควบคุมพิเศษ (เช่น ยาปฏิชีวนะ) ลงคลังกลาง
 
+**ค้นบาร์โค้ดจากอินเทอร์เน็ต** — ถ้าค้น/สแกนบาร์โค้ดแล้วไม่พบทั้งในร้านและคลังกลาง ระบบจะถาม Open Food Facts,
+Open Pet Food Facts, Open Beauty Facts และ Open Products Facts (`src/lib/online-product-lookup.ts`) ถ้าพบจะบันทึกเข้าคลังกลาง
+ให้ร้านอื่นเจอทันทีครั้งหน้า (บาร์โค้ดที่ไม่พบจะไม่ถามซ้ำ 6 ชั่วโมง) กฎตั้งชื่อ/จัดหมวดใช้ร่วมกับสคริปต์ build
+ที่ `src/lib/catalog-rules.ts` (สคริปต์ import ไฟล์ `.ts` นี้ตรงๆ ด้วย type stripping ของ Node 22.18+)
+
 ข้อมูลถูกใส่ผ่าน migration (`prisma/migrations/*_shared_catalog`) จึงขึ้นเซิร์ฟเวอร์พร้อม `prisma migrate deploy`
 วิธีอัปเดตข้อมูล:
 
