@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FilterChips } from "@/components/ui/FilterChips";
 import { SearchBox } from "@/components/ui/SearchBox";
-import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { ProductThumb } from "@/components/ui/ProductThumb";
 import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
@@ -112,8 +111,19 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
       </div>
 
       {q && products.length === 0 && (
-        <div className="px-5 pt-3 sm:px-8">
-          <CatalogFallback q={q} autoAdd />
+        <div className="mx-5 mt-3 rounded-2xl border border-brand/40 bg-brand-light px-4 py-3.5 sm:mx-8">
+          <div className="text-[13px] font-semibold text-brand">เพิ่มสินค้านี้เข้าร้าน</div>
+          <p className="mt-1 text-[12px] text-foreground/70">
+            {/^d{8,14}$/.test(q)
+              ? "ระบบจะค้นชื่อ รูป และขนาดอื่นของสินค้าจากบาร์โค้ดให้ในหน้าเพิ่มสินค้า"
+              : "กรอกบาร์โค้ด ชื่อ ราคา และรูปสินค้าในหน้าเพิ่มสินค้า"}
+          </p>
+          <Link
+            href={`/inventory?new=${encodeURIComponent(q)}`}
+            className="mt-3 block rounded-[10px] bg-brand py-2.5 text-center text-[13px] font-semibold text-white"
+          >
+            + เพิ่มสินค้าใหม่
+          </Link>
         </div>
       )}
 

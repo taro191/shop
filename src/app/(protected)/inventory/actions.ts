@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { barcodeOwner } from "@/lib/barcodes";
+import { addCatalogItemsToStoreAction } from "@/app/(protected)/catalog/actions";
 
 export type ActionState = { error?: string } | null;
 
@@ -94,6 +95,10 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
     entityId: product.id,
     summary: `เพิ่มสินค้า "${product.name}"`,
   });
+
+  // The same product's other sizes, ticked in the form: added unpriced.
+  const otherSizes = formData.getAll("otherSizes").filter((v): v is string => typeof v === "string");
+  if (otherSizes.length > 0) await addCatalogItemsToStoreAction(otherSizes);
 
   revalidatePath("/inventory");
   revalidatePath("/dashboard");

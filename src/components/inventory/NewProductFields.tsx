@@ -19,17 +19,20 @@ type Lookup =
   | { state: "none" };
 
 type CatalogHit = {
+  id: string;
   name: string;
   category: string;
   unit: string;
   barcode: string | null;
   imageUrl: string | null;
   groupKey: string | null;
+  size: string | null;
 };
 
 /** Fields of the add-product form: the barcode comes first and is looked up (store,
- * shared catalog, then online) to fill in the name, category, unit and photo; then the
- * name, and a button to add a photo from the camera or gallery. */
+ * shared catalog, then online) to fill in the name, category, unit and photo, and to
+ * offer the same product's other sizes (added unpriced alongside it); then the name,
+ * and a button to add a photo from the camera or gallery. */
 export function NewProductFields({ prefill }: { prefill: string }) {
   const prefillIsBarcode = /^\d{8,14}$/.test(prefill);
   const [barcode, setBarcode] = useState(prefillIsBarcode ? prefill : "");
@@ -41,6 +44,7 @@ export function NewProductFields({ prefill }: { prefill: string }) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [otherSizes, setOtherSizes] = useState<{ code: string; items: CatalogHit[] } | null>(null);
   const [lookup, setLookup] = useState<Lookup | null>(prefillIsBarcode ? { state: "searching" } : null);
   const lookedUp = useRef<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -76,6 +80,8 @@ export function NewProductFields({ prefill }: { prefill: string }) {
       if (PRODUCT_UNITS.includes(hit.unit)) setUnit(hit.unit);
       setCatalogImage(hit.imageUrl);
       setGroupKey(hit.groupKey ?? "");
+      const others = items.filter((i) => i !== hit && i.barcode);
+      setOtherSizes(others.length > 0 ? { code, items: others } : null);
       setLookup({ state: "found", name: hit.name });
     } catch {
       if (lookedUp.current === code) setLookup({ state: "none" });
@@ -117,6 +123,7 @@ export function NewProductFields({ prefill }: { prefill: string }) {
               setBarcode(e.target.value);
               lookedUp.current = null;
               setLookup(null);
+              setOtherSizes(null);
             }}
             onBlur={() => lookUp(barcode)}
             onKeyDown={(e) => {
@@ -193,6 +200,21 @@ export function NewProductFields({ prefill }: { prefill: string }) {
         <input type="hidden" name="imageUrl" value={photo ? "" : (catalogImage ?? "")} />
         <input type="hidden" name="groupKey" value={groupKey} />
       </div>
+
+      {otherSizes && (
+        <div key={otherSizes.code} className="rounded-[9px] border border-border px-3.5 py-3">
+          <div className="mb-2 text-[12px] font-semibold text-muted">ขนาดอื่นของสินค้านี้ — เพิ่มเข้าร้านด้วย (ยังไม่ตั้งราคา)</div>
+          <div className="flex flex-col gap-2">
+            {otherSizes.items.map((item) => (
+              <label key={item.id} className="flex items-center gap-2.5 text-[12.5px] text-foreground">
+                <input type="checkbox" name="otherSizes" value={item.id} defaultChecked className="h-4 w-4 accent-brand" />
+                <ProductThumb src={item.imageUrl} />
+                <span className="min-w-0">{item.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <label className={labelClass}>หมวดหมู่</label>
