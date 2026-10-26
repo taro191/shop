@@ -49,6 +49,7 @@ export function NewProductFields({ prefill }: { prefill: string }) {
   const lookedUp = useRef<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   function lookUp(code: string) {
     code = code.trim();
@@ -163,14 +164,21 @@ export function NewProductFields({ prefill }: { prefill: string }) {
 
       <div>
         <label className={labelClass}>รูปสินค้า (ถ้ามี)</label>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {shownPhoto && <ProductThumb src={shownPhoto} />}
           <button
             type="button"
-            onClick={() => fileRef.current?.click()}
-            className="rounded-[9px] border border-border px-3.5 py-2 text-[12.5px] font-semibold text-foreground/75"
+            onClick={() => cameraRef.current?.click()}
+            className="rounded-[9px] border border-border px-3 py-2 text-[12.5px] font-semibold text-foreground/75"
           >
-            {shownPhoto ? "เปลี่ยนรูป" : "+ เพิ่มรูปภาพ"}
+            ถ่ายรูป
+          </button>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="rounded-[9px] border border-border px-3 py-2 text-[12.5px] font-semibold text-foreground/75"
+          >
+            เลือกรูปในเครื่อง
           </button>
           {shownPhoto && (
             <button
@@ -186,6 +194,19 @@ export function NewProductFields({ prefill }: { prefill: string }) {
           )}
         </div>
         {photoError && <div className="mt-1.5 text-[12px] text-danger">{photoError}</div>}
+        {/* On phones `capture` opens the camera straight away; without it the
+            picker offers the gallery and files. Desktops ignore `capture`. */}
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            choosePhoto(e.target.files?.[0]);
+            e.target.value = "";
+          }}
+        />
         <input
           ref={fileRef}
           type="file"
