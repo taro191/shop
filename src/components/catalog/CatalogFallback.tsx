@@ -1,20 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CatalogAddButton } from "@/components/catalog/CatalogAddButton";
-import type { AddedProduct } from "@/app/(protected)/catalog/actions";
+import { ProductThumb } from "@/components/ui/ProductThumb";
+import { addCatalogItemsToStoreAction, type AddedProduct } from "@/app/(protected)/catalog/actions";
 
 type OnlineSource = { label: string; url: string };
-type CatalogItem = { id: string; name: string; brand: string | null; unit: string; size: string | null; barcode: string | null };
+type CatalogItem = {
+  id: string;
+  name: string;
+  brand: string | null;
+  unit: string;
+  size: string | null;
+  barcode: string | null;
+  imageUrl: string | null;
+};
 
 /** Shown when a store search finds nothing: looks the query (name or barcode) up in the
  * shared catalog and lets the user pull a match into the store on the spot. Without
- * `onAdded` the current page is refreshed so the new product shows up in its results. */
-export function CatalogFallback({ q, onAdded }: { q: string; onAdded?: (product: AddedProduct) => void }) {
+ * `onAdded` the current page is refreshed so the new product shows up in its results.
+ * With `autoAdd`, a scanned barcode's match and its other sizes go straight into the
+ * store without prices (the page then flags them as unpriced). */
+export function CatalogFallback({ q, onAdded, autoAdd }: { q: string; onAdded?: (product: AddedProduct) => void; autoAdd?: boolean }) {
   const router = useRouter();
   const [result, setResult] = useState<{ q: string; items: CatalogItem[]; total: number; online: OnlineSource | null } | null>(null);
+  const [autoAdded, setAutoAdded] = useState<{ q: string; count: number } | null>(null);
+  const autoAddedFor = useRef<string | null>(null);
   const query = q.trim();
   const isBarcode = /^\d{8,14}$/.test(query);
 
@@ -36,7 +49,33 @@ export function CatalogFallback({ q, onAdded }: { q: string; onAdded?: (product:
     };
   }, [query]);
 
+  const autoAddItems = autoAdd && isBarcode && result?.q === query && result.items.length > 0 ? result.items : null;
+  useEffect(() => {
+    if (!autoAddItems || autoAddedFor.current === query) return;
+    autoAddedFor.current = query;
+    addCatalogItemsToStoreAction(autoAddItems.map((i) => i.id))
+      .then(({ added }) => {
+        setAutoAdded({ q: query, count: added.length });
+        if (added.length > 0) router.refresh();
+      })
+      .catch(() => setAutoAdded({ q: query, count: 0 }));
+  }, [autoAddItems, query, router]);
+
   if (query.length < 2) return null;
+  if (autoAddItems && autoAdded?.q !== query) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-white px-4 py-3 text-[12.5px] text-muted">
+        พบสินค้า {autoAddItems.length} ขนาด — กำลังเพิ่มเข้าร้าน...
+      </div>
+    );
+  }
+  if (autoAddItems && autoAdded && autoAdded.count > 0) {
+    return (
+      <div className="rounded-xl border border-brand/40 bg-brand-light px-4 py-3 text-[12.5px] font-semibold text-brand">
+        เพิ่มสินค้า {autoAdded.count} ขนาดเข้าร้านแล้ว (ยังไม่ตั้งราคา)
+      </div>
+    );
+  }
   if (!result || result.q !== query) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-white px-4 py-3 text-[12.5px] text-muted">
@@ -78,10 +117,13 @@ export function CatalogFallback({ q, onAdded }: { q: string; onAdded?: (product:
       </div>
       {result.items.map((item) => (
         <div key={item.id} className="flex flex-col gap-2 border-t border-border px-4 py-3 first:border-none">
-          <div className="min-w-0">
-            <div className="text-[13px] font-medium text-foreground">{item.name}</div>
-            <div className="text-[11.5px] text-muted">
-              {[item.brand, `หน่วย${item.unit}`, item.barcode].filter(Boolean).join(" · ")}
+          <div className="flex min-w-0 items-center gap-3">
+            <ProductThumb src={item.imageUrl} />
+            <div className="min-w-0">
+              <div className="text-[13px] font-medium text-foreground">{item.name}</div>
+              <div className="text-[11.5px] text-muted">
+                {[item.brand, `หน่วย${item.unit}`, item.barcode].filter(Boolean).join(" · ")}
+              </div>
             </div>
           </div>
           <CatalogAddButton catalogId={item.id} unit={item.unit} defaultOpen={result.items.length === 1} onAdded={handleAdded} />

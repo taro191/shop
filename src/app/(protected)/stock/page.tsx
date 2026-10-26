@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { FilterChips } from "@/components/ui/FilterChips";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { CatalogFallback } from "@/components/catalog/CatalogFallback";
+import { ProductThumb } from "@/components/ui/ProductThumb";
 import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
 import { addDays } from "@/lib/date";
@@ -41,6 +42,20 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
     }),
   ]);
 
+  // A scanned barcode also brings up the same product's other sizes.
+  const groupKeys = q ? products.flatMap((p) => (p.groupKey ? [p.groupKey] : [])) : [];
+  if (groupKeys.length > 0) {
+    const otherSizes = await prisma.product.findMany({
+      where: { storeId, groupKey: { in: groupKeys }, id: { notIn: products.map((p) => p.id) } },
+      orderBy: { name: "asc" },
+      include: { packs: { select: { name: true, size: true } } },
+      take: 20,
+    });
+    products.push(...otherSizes);
+  }
+  // Only make room for photos when some row has one.
+  const hasPhotos = products.some((p) => p.imageUrl);
+
   return (
     <div className="mx-auto max-w-[560px] pb-10">
       <PageHeader title="เช็คสต๊อก" subtitle="ดูสินค้าใกล้หมดและใกล้หมดอายุ หรือค้นหาจำนวนคงเหลือ" />
@@ -66,20 +81,31 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
             const stock = productStockStatus(p.quantity);
             const expiry = expiryStatus(p.expiresAt);
             return (
-              <div key={p.id} className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 first:border-none">
-                <div className="min-w-0">
-                  <div className="truncate text-[13.5px] font-medium text-foreground">{p.name}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-muted">
-                    <span>
-                      {p.category} · ฿{formatBaht(p.sellPrice)}
-                    </span>
-                    {expiry && <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-semibold ${expiry.className}`}>{expiry.text}</span>}
+              <Link
+                key={p.id}
+                href={`/inventory/${p.id}`}
+                className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 first:border-none"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  {hasPhotos && <ProductThumb src={p.imageUrl} />}
+                  <div className="min-w-0">
+                    <div className="truncate text-[13.5px] font-medium text-foreground">{p.name}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11.5px] text-muted">
+                      <span>
+                        {p.category}
+                        {p.sellPrice > 0 && ` · ฿${formatBaht(p.sellPrice)}`}
+                      </span>
+                      {p.sellPrice === 0 && (
+                        <span className="rounded bg-accent-light px-1.5 py-0.5 text-[10.5px] font-semibold text-accent-dark">ยังไม่ตั้งราคา</span>
+                      )}
+                      {expiry && <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-semibold ${expiry.className}`}>{expiry.text}</span>}
+                    </div>
                   </div>
                 </div>
                 <span className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1 text-[12px] font-semibold ${stock.className}`}>
                   {formatStock(p.quantity, p.unit, p.packs)}
                 </span>
-              </div>
+              </Link>
             );
           })
         )}
@@ -87,7 +113,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
 
       {q && products.length === 0 && (
         <div className="px-5 pt-3 sm:px-8">
-          <CatalogFallback q={q} />
+          <CatalogFallback q={q} autoAdd />
         </div>
       )}
 

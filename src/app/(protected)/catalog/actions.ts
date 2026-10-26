@@ -58,6 +58,8 @@ export async function addFromCatalogAction(_prev: CatalogAddState, formData: For
       category: item.category,
       unit: item.unit,
       barcode: item.barcode,
+      imageUrl: item.imageUrl,
+      groupKey: item.groupKey,
       costPrice: parsed.data.costPrice,
       sellPrice: parsed.data.sellPrice,
       quantity: parsed.data.quantity,
@@ -95,4 +97,64 @@ export async function addFromCatalogAction(_prev: CatalogAddState, formData: For
       quantity: product.quantity,
     },
   };
+}
+
+/** Adds catalog items — a scanned product and its other sizes — to the store in one go,
+ * with no price and no stock yet (the stock page then asks for a price). Items the store
+ * already has, by barcode or name, are skipped. */
+export async function addCatalogItemsToStoreAction(catalogIds: string[]): Promise<{ added: AddedProduct[] }> {
+  const session = await getSession();
+  if (!session || catalogIds.length === 0) return { added: [] };
+
+  const items = await prisma.catalogProduct.findMany({ where: { id: { in: catalogIds.slice(0, 20) } } });
+  const added: AddedProduct[] = [];
+  for (const item of items) {
+    if (item.barcode && (await barcodeOwner(session.storeId, item.barcode))) continue;
+    if (await prisma.product.findFirst({ where: { storeId: session.storeId, name: item.name }, select: { id: true } })) continue;
+    try {
+      const product = await prisma.product.create({
+        data: {
+          storeId: session.storeId,
+          name: item.name,
+          category: item.category,
+          unit: item.unit,
+          barcode: item.barcode,
+          imageUrl: item.imageUrl,
+          groupKey: item.groupKey,
+          costPrice: 0,
+          sellPrice: 0,
+          quantity: 0,
+        },
+      });
+      added.push({
+        id: product.id,
+        name: product.name,
+        unit: product.unit,
+        category: product.category,
+        barcode: product.barcode,
+        costPrice: product.costPrice,
+        sellPrice: product.sellPrice,
+        quantity: product.quantity,
+      });
+    } catch {
+      // A concurrent scan added the same barcode first.
+    }
+  }
+  if (added.length === 0) return { added };
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  for (const product of added) {
+    await logAudit({
+      storeId: session.storeId,
+      userId: session.userId,
+      userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+      action: "product.create",
+      entityType: "Product",
+      entityId: product.id,
+      summary: `เพิ่มสินค้า "${product.name}" จากคลังสินค้ากลาง (ยังไม่ตั้งราคา)`,
+    });
+  }
+
+  for (const path of ["/catalog", "/inventory", "/dashboard", "/search", "/stock", "/receive", "/sell"]) revalidatePath(path);
+  return { added };
 }

@@ -4,6 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PackManager } from "@/components/inventory/PackManager";
+import { PriceEditor } from "@/components/inventory/PriceEditor";
+import { ProductThumb } from "@/components/ui/ProductThumb";
 import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht, formatThaiDate } from "@/lib/format";
 import { formatStock, sortPacks } from "@/lib/packs";
@@ -19,6 +21,14 @@ export default async function ProductPage({ params }: PageProps<"/inventory/[id]
   });
   if (!product) notFound();
 
+  const otherSizes = product.groupKey
+    ? await prisma.product.findMany({
+        where: { storeId: user.storeId, groupKey: product.groupKey, id: { not: product.id } },
+        select: { id: true, name: true, sellPrice: true, imageUrl: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
+
   const status = productStockStatus(product.quantity);
   const expiry = expiryStatus(product.expiresAt);
   const packs = product.packs.map((p) => ({ id: p.id, name: p.name, size: p.size, barcode: p.barcode, sellPrice: p.sellPrice }));
@@ -32,6 +42,11 @@ export default async function ProductPage({ params }: PageProps<"/inventory/[id]
         </Link>
       </div>
       <PageHeader title={product.name} subtitle={[product.category, product.barcode].filter(Boolean).join(" · ")} />
+      {product.imageUrl && (
+        <div className="px-5 pt-3 sm:px-8">
+          <ProductThumb src={product.imageUrl} size="lg" />
+        </div>
+      )}
 
       <div className="mx-5 mt-4 grid grid-cols-2 gap-2.5 sm:mx-8 sm:grid-cols-3">
         <div className="col-span-2 rounded-2xl border border-border bg-white px-4 py-3.5 sm:col-span-1">
@@ -59,6 +74,31 @@ export default async function ProductPage({ params }: PageProps<"/inventory/[id]
           {product.expiresAt && <div className="text-[11.5px] text-muted">หมดอายุ {formatThaiDate(product.expiresAt)}</div>}
         </div>
       </div>
+
+      <div className="mx-5 mt-3 sm:mx-8">
+        <PriceEditor productId={product.id} unit={product.unit} sellPrice={product.sellPrice} costPrice={product.costPrice} />
+      </div>
+
+      {otherSizes.length > 0 && (
+        <div className="mx-5 mt-5 overflow-hidden rounded-2xl border border-border bg-white sm:mx-8">
+          <div className="border-b border-border px-5 py-3 font-display text-[15px] font-semibold text-foreground">ขนาดอื่นของสินค้านี้</div>
+          {otherSizes.map((p) => (
+            <Link
+              key={p.id}
+              href={`/inventory/${p.id}`}
+              className="flex items-center justify-between gap-3 border-t border-border px-5 py-3 first:border-none"
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <ProductThumb src={p.imageUrl} />
+                <span className="truncate text-[13px] font-medium text-foreground">{p.name}</span>
+              </span>
+              <span className={`shrink-0 text-[12px] font-semibold ${p.sellPrice === 0 ? "text-accent-dark" : "text-muted"}`}>
+                {p.sellPrice === 0 ? "ยังไม่ตั้งราคา" : `฿${formatBaht(p.sellPrice)}`}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="mx-5 mt-5 sm:mx-8">
         <PackManager

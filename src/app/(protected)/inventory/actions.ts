@@ -178,3 +178,45 @@ export async function deletePackAction(packId: string): Promise<PackResult> {
   revalidateProductPages(pack.productId);
   return { ok: true };
 }
+
+const priceSchema = z.object({
+  productId: z.string().min(1),
+  sellPrice: z.coerce.number({ message: "กรุณากรอกราคาขาย" }).min(0, "ราคาขายต้องไม่ติดลบ"),
+  costPrice: z.coerce.number({ message: "ราคาทุนต้องเป็นตัวเลข" }).min(0, "ราคาทุนต้องไม่ติดลบ"),
+});
+
+/** Sets a product's sell and cost price per base unit — e.g. for products added from
+ * the catalog by a scan, which start at ฿0. */
+export async function updateProductPriceAction(input: { productId: string; sellPrice: string; costPrice: string }): Promise<PackResult> {
+  const session = await getSession();
+  if (!session) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
+
+  const parsed = priceSchema.safeParse({
+    productId: input.productId,
+    sellPrice: input.sellPrice.trim() || undefined,
+    costPrice: input.costPrice.trim() || 0,
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
+
+  const product = await prisma.product.findFirst({ where: { id: parsed.data.productId, storeId: session.storeId } });
+  if (!product) return { ok: false, error: "ไม่พบสินค้านี้" };
+
+  await prisma.product.update({
+    where: { id: product.id },
+    data: { sellPrice: parsed.data.sellPrice, costPrice: parsed.data.costPrice },
+  });
+
+  const actingUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  await logAudit({
+    storeId: session.storeId,
+    userId: session.userId,
+    userName: actingUser?.name ?? "ไม่ทราบชื่อ",
+    action: "product.price_update",
+    entityType: "Product",
+    entityId: product.id,
+    summary: `แก้ราคา "${product.name}" ขาย ฿${product.sellPrice} → ฿${parsed.data.sellPrice}, ทุน ฿${product.costPrice} → ฿${parsed.data.costPrice}`,
+  });
+
+  revalidateProductPages(product.id);
+  return { ok: true };
+}

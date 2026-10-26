@@ -9,6 +9,9 @@ export type OffProduct = {
   product_name?: string;
   product_name_th?: string;
   product_name_en?: string;
+  generic_name?: string;
+  generic_name_th?: string;
+  abbreviated_product_name_th?: string;
   brands?: string | string[];
   quantity?: string;
   categories_tags?: string[];
@@ -112,12 +115,25 @@ export const clean = (s: string | undefined | null): string =>
     .replace(/\s+-\s+.*$/, "") // drop " - brand - size" suffixes some contributors add
     .trim();
 
+/** The product's Thai name, if any field has one. Many Thai entries keep a foreign
+ * product_name and put the Thai name in generic_name_th (e.g. "Glutamate de sodium" /
+ * "ผงชูรส"); generic names longer than a short label are descriptions, not names. */
+export function thaiNameOf(p: OffProduct): string | null {
+  const names = [p.product_name_th, p.product_name, p.abbreviated_product_name_th].map(clean);
+  const generic = [p.generic_name_th, p.generic_name].map(clean).filter((n) => n.length <= 60);
+  return [...names, ...generic].find((n) => THAI.test(n)) ?? null;
+}
+
 /** Display name, brand and size for an Open Food Facts product, preferring the Thai
  * name; null when it has no usable name (blank, numeric, or an untranslated
- * foreign-language label that isn't useful to Thai shops). */
-export function describeOffProduct(p: OffProduct): { name: string; baseName: string; brand: string | null; size: string | null } | null {
+ * foreign-language label that isn't useful to Thai shops). `thaiFallback` stands in
+ * for a missing Thai name — used for another size of a product whose Thai name is known. */
+export function describeOffProduct(
+  p: OffProduct,
+  thaiFallback?: string | null,
+): { name: string; baseName: string; thaiName: string | null; brand: string | null; size: string | null } | null {
   const brands = asList(p.brands);
-  const thaiName = [p.product_name_th, p.product_name].map(clean).find((n) => THAI.test(n));
+  const thaiName = thaiNameOf(p) ?? thaiFallback ?? null;
   const baseName = thaiName || clean(p.product_name) || clean(p.product_name_en);
   if (!baseName || baseName.length < 3 || /^\d+$/.test(baseName)) return null;
   // Untranslated foreign-language entries (e.g. German/French export labels) aren't useful to Thai shops.
@@ -129,5 +145,5 @@ export function describeOffProduct(p: OffProduct): { name: string; baseName: str
   let name = baseName;
   if (brand && !brands.some((b) => lowerName.includes(b.toLowerCase()))) name = `${brand} ${name}`;
   if (size && !/\d\s*(ก\.|กรัม|g|ml|มล|ล\.|ลิตร|kg|กก)/i.test(name)) name = `${name} ${size}`;
-  return { name: name.slice(0, 180), baseName, brand: brand ? brand.slice(0, 120) : null, size };
+  return { name: name.slice(0, 180), baseName, thaiName, brand: brand ? brand.slice(0, 120) : null, size };
 }

@@ -3,16 +3,30 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { catalogSourceInfo, looksLikeBarcode, lookupBarcodeOnline } from "@/lib/online-product-lookup";
 
+const ITEM_FIELDS = { id: true, name: true, brand: true, unit: true, size: true, barcode: true, imageUrl: true } as const;
+
 /** Shared-catalog matches for a name, brand or exact barcode, leaving out items the
- * store already stocks — used when a store-side search comes up empty. A barcode the
- * catalog doesn't know is looked up online (Open Food Facts family) and, if found,
- * added to the catalog and returned with `online: true`. */
+ * store already stocks — used when a store-side search comes up empty. A barcode is
+ * looked up online (Open Food Facts family) the first time it's searched: the result —
+ * with its photo and the same product in other sizes — is added to the catalog, and
+ * the whole size group is returned with `online` naming the source. */
 export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) return NextResponse.json({ items: [], total: 0 });
+
+  if (looksLikeBarcode(q)) {
+    const found = await lookupBarcodeOnline(q);
+    if (found) {
+      const items = await withoutOwned(
+        session.storeId,
+        found.group.map(({ id, name, brand, unit, size, barcode, imageUrl }) => ({ id, name, brand, unit, size, barcode, imageUrl })),
+      );
+      return NextResponse.json({ items, total: items.length, online: catalogSourceInfo(found.row.source) });
+    }
+  }
 
   const where = { OR: [{ name: { contains: q } }, { brand: { contains: q } }, { barcode: q }] };
   const [total, candidates] = await Promise.all([
@@ -21,20 +35,19 @@ export async function GET(request: NextRequest) {
       where,
       orderBy: [{ popularity: "desc" }, { name: "asc" }],
       take: 12,
-      select: { id: true, name: true, brand: true, unit: true, size: true, barcode: true },
+      select: ITEM_FIELDS,
     }),
   ]);
 
-  if (candidates.length === 0 && looksLikeBarcode(q)) {
-    const found = await lookupBarcodeOnline(q);
-    if (!found) return NextResponse.json({ items: [], total: 0 });
-    const { id, name, brand, unit, size, barcode, source } = found;
-    return NextResponse.json({ items: [{ id, name, brand, unit, size, barcode }], total: 1, online: catalogSourceInfo(source) });
-  }
+  const items = (await withoutOwned(session.storeId, candidates)).slice(0, 5);
+  return NextResponse.json({ items, total });
+}
 
+/** Drops catalog items the store already has (same barcode or same name). */
+async function withoutOwned<T extends { name: string; barcode: string | null }>(storeId: string, candidates: T[]) {
   const owned = await prisma.product.findMany({
     where: {
-      storeId: session.storeId,
+      storeId,
       OR: [
         { barcode: { in: candidates.flatMap((c) => (c.barcode ? [c.barcode] : [])) } },
         { name: { in: candidates.map((c) => c.name) } },
@@ -44,7 +57,5 @@ export async function GET(request: NextRequest) {
   });
   const ownedBarcodes = new Set(owned.flatMap((o) => (o.barcode ? [o.barcode] : [])));
   const ownedNames = new Set(owned.map((o) => o.name));
-  const items = candidates.filter((c) => !(c.barcode && ownedBarcodes.has(c.barcode)) && !ownedNames.has(c.name)).slice(0, 5);
-
-  return NextResponse.json({ items, total });
+  return candidates.filter((c) => !(c.barcode && ownedBarcodes.has(c.barcode)) && !ownedNames.has(c.name));
 }
