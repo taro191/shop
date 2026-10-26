@@ -3,11 +3,12 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FilterChips } from "@/components/ui/FilterChips";
 import { SearchBox } from "@/components/ui/SearchBox";
-import { SlideOver, Field, SelectField } from "@/components/ui/SlideOver";
+import { SlideOver } from "@/components/ui/SlideOver";
+import { NewProductFields } from "@/components/inventory/NewProductFields";
 import { addProductAction } from "./actions";
 import { productStockStatus, expiryStatus } from "@/lib/status";
 import { formatBaht } from "@/lib/format";
-import { PRODUCT_CATEGORIES, PRODUCT_UNITS } from "@/lib/constants";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import Link from "next/link";
 import { CatalogFallback } from "@/components/catalog/CatalogFallback";
 import { formatStock } from "@/lib/packs";
@@ -52,18 +53,7 @@ export default async function InventoryPage({
               ตรวจนับสต๊อก
             </Link>
             <SlideOver triggerLabel="เพิ่มสินค้าใหม่" title="เพิ่มสินค้าใหม่" action={addProductAction} initialOpen={!!prefillName}>
-              <Field label="ชื่อสินค้า" name="name" placeholder="เช่น น้ำปลาตราปลาหมึก 700ml" defaultValue={prefillName} required />
-              <SelectField label="หมวดหมู่" name="category" options={PRODUCT_CATEGORIES} />
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="ราคาทุน (บาท)" name="costPrice" type="number" placeholder="0" required />
-                <Field label="ราคาขาย (บาท)" name="sellPrice" type="number" placeholder="0" required />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="จำนวนคงเหลือ" name="quantity" type="number" placeholder="0" required />
-                <SelectField label="หน่วยนับ" name="unit" options={PRODUCT_UNITS} />
-              </div>
-              <Field label="บาร์โค้ด (ถ้ามี)" name="barcode" placeholder="สแกนหรือพิมพ์เลขบาร์โค้ด" />
-              <Field label="วันหมดอายุ (ถ้ามี)" name="expiresAt" type="date" />
+              <NewProductFields prefill={prefillName} />
             </SlideOver>
           </div>
         }

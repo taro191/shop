@@ -3,7 +3,17 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { catalogSourceInfo, looksLikeBarcode, lookupBarcodeOnline } from "@/lib/online-product-lookup";
 
-const ITEM_FIELDS = { id: true, name: true, brand: true, unit: true, size: true, barcode: true, imageUrl: true } as const;
+const ITEM_FIELDS = {
+  id: true,
+  name: true,
+  brand: true,
+  category: true,
+  unit: true,
+  size: true,
+  barcode: true,
+  imageUrl: true,
+  groupKey: true,
+} as const;
 
 /** Shared-catalog matches for a name, brand or exact barcode, leaving out items the
  * store already stocks — used when a store-side search comes up empty. A barcode is
@@ -22,7 +32,9 @@ export async function GET(request: NextRequest) {
     if (found) {
       const items = await withoutOwned(
         session.storeId,
-        found.group.map(({ id, name, brand, unit, size, barcode, imageUrl }) => ({ id, name, brand, unit, size, barcode, imageUrl })),
+        found.group.map(({ id, name, brand, category, unit, size, barcode, imageUrl, groupKey }) =>
+          ({ id, name, brand, category, unit, size, barcode, imageUrl, groupKey }),
+        ),
       );
       return NextResponse.json({ items, total: items.length, online: catalogSourceInfo(found.row.source) });
     }

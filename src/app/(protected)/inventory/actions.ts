@@ -18,7 +18,23 @@ const productSchema = z.object({
   sellPrice: z.coerce.number().min(0),
   quantity: z.coerce.number().int().min(0),
   expiresAt: z.string().trim().optional(),
+  // A photo URL from the shared catalog (https only), used when no photo is uploaded.
+  imageUrl: z.string().trim().max(500).startsWith("https://").optional(),
+  groupKey: z.string().trim().max(191).optional(),
 });
+
+/** Largest uploaded photo we keep; the form shrinks photos to well under this. */
+const MAX_IMAGE_BYTES = 600 * 1024;
+
+/** Decodes a photo sent by the add-product form as a JPEG/PNG/WebP data URL. */
+function decodeImage(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value) return null;
+  const m = value.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!m) return { error: "ไฟล์รูปไม่ถูกต้อง" } as const;
+  const data = Buffer.from(m[2], "base64");
+  if (data.length > MAX_IMAGE_BYTES) return { error: "รูปใหญ่เกินไป" } as const;
+  return { mimeType: m[1], data } as const;
+}
 
 export async function addProductAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const session = await getSession();
@@ -33,16 +49,24 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
     sellPrice: formData.get("sellPrice"),
     quantity: formData.get("quantity"),
     expiresAt: formData.get("expiresAt") || undefined,
+    imageUrl: formData.get("imageUrl") || undefined,
+    groupKey: formData.get("groupKey") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง" };
   }
+  const upload = decodeImage(formData.get("imageData"));
+  if (upload && "error" in upload) return { error: upload.error };
 
   const barcode = parsed.data.barcode || null;
   if (barcode) {
     const owner = await barcodeOwner(session.storeId, barcode);
     if (owner) return { error: `บาร์โค้ดนี้ใช้กับ "${owner}" อยู่แล้ว` };
   }
+
+  const image = upload
+    ? await prisma.productImage.create({ data: { storeId: session.storeId, mimeType: upload.mimeType, data: upload.data } })
+    : null;
 
   const product = await prisma.product.create({
     data: {
@@ -55,6 +79,8 @@ export async function addProductAction(_prevState: ActionState, formData: FormDa
       sellPrice: parsed.data.sellPrice,
       quantity: parsed.data.quantity,
       expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
+      imageUrl: image ? `/api/images/${image.id}` : (parsed.data.imageUrl ?? null),
+      groupKey: parsed.data.groupKey ?? null,
     },
   });
 

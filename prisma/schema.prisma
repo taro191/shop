@@ -72,6 +72,7 @@ model Store {
   auditLogs        AuditLog[]
   cashEntries      CashEntry[]
   productPacks     ProductPack[]
+  productImages    ProductImage[]
 }
 
 /**
@@ -194,6 +195,19 @@ model Product {
   @@index([storeId])
   @@index([storeId, name])
   @@index([storeId, groupKey])
+}
+
+/// A product photo uploaded by the store, served at /api/images/<id>. Kept in the
+/// database rather than on disk so it survives redeploys of the app directory.
+model ProductImage {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  mimeType  String
+  data      Bytes    @db.MediumBlob
+  createdAt DateTime @default(now())
+
+  @@index([storeId])
 }
 
 model Supplier {

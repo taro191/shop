@@ -39,7 +39,7 @@ export function ScanSearchButton({ action, params }: { action: string; params?: 
   );
 }
 
-function CameraScanModal({ onDetect, onClose }: { onDetect: (code: string) => void; onClose: () => void }) {
+export function CameraScanModal({ onDetect, onClose }: { onDetect: (code: string) => void; onClose: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [state, setState] = useState<"starting" | "live" | "denied" | "unsupported">(() =>
     canUseCamera() ? "starting" : "unsupported",
